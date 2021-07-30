@@ -6,7 +6,7 @@ cd testweave-docker
 sudo docker-compose up 
 ```
 
-For any restart add the following restart:
+For any restart add the following flag:
 ```bash
 sudo docker-compose up --force-recreate
 ```
