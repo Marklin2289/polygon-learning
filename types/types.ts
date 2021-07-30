@@ -8,6 +8,7 @@ export enum CHAINS {
   SECRET = "secret",
   SOLANA = "solana",
   TEZOS = "tezos",
+  ARWEAVE = "arweave",
 }
 
 // Avalanche

@@ -65,6 +65,9 @@ export default function Chain({ chainConfig }: ChainT) {
       return dynamic(() => import('../components/protocols/tezos'), dynOptions);
     if (chainId === CHAINS.THE_GRAPH)
       return dynamic(() => import('../components/protocols/the_graph'), dynOptions);
+    if (chainId === CHAINS.ARWEAVE)
+      return dynamic(() => import('../components/protocols/arweave'), dynOptions);
+
   })() as DynChainT;
 
   return (

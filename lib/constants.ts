@@ -193,4 +193,57 @@ export const CHAINS_CONFIG: ChainsType = {
 			},
 		]
 	},
+	[CHAINS.ARWEAVE]: {
+		id: CHAINS.ARWEAVE,
+		label: "Arweave",
+		active: true,
+		logoUrl: "https://cryptologos.cc/logos/arweave-ar-logo.svg?v=013",
+		steps: [
+			{
+				id: "connect",
+				title: "Connect to Arweave",
+				url: ""
+			},
+			{
+				id: "wallet",
+				title: "Create a Wallet",
+				url: ""
+			},
+			{
+				id: "fund",
+				title: "Fund the account with AR",
+				url: ""
+			},
+			{
+				id: "balance",
+				title: "Get the balance of the wallet",
+				url: ""
+			},
+			{
+				id: "transfer",
+				title: "Transfer some AR",
+				url: ""
+			},
+			{
+				id: "submit",
+				title: "Submit a data transaction",
+				url: ""
+			},
+			{
+				id: "deploy",
+				title: "Deploy SmartWeave Contract",
+				url: ""
+			},
+			{
+				id: "call",
+				title: "Interacting with SmartWeave",
+				url: ""
+			},
+			{
+				id: "retrieve",
+				title: "Retrieve All post from an Address",
+				url: ""
+			},
+		]
+	},
 }
