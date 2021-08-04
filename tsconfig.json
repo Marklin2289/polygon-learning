@@ -18,6 +18,8 @@
       "@arweave/*": [
           "components/protocols/arweave/*"
       ]
+      ,
+      "@near/*": ["components/protocols/near/*"] 
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

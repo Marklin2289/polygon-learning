@@ -2,30 +2,32 @@ import { useEffect, useState } from 'react';
 import axios from "axios";
 import { Alert, Col, Space, Typography } from "antd";
 import { LoadingOutlined } from '@ant-design/icons';
-
-import { AvalancheConnectResponse } from 'types/avalanche-types';
+import { NearConnectReponse } from '@near/types';
+import { useAppState } from '@near/hooks'
 
 const { Text } = Typography;
 
 const Connect = () => {
-	const [version, setVersion] = useState<string | null>(null);
+	const [version, setVersion] = useState<string>('');
 	const [fetchingVersion, setFetchingVersion] = useState<boolean>(false);
+    const { state } = useAppState();
+    const { networkId } = state
 
 	useEffect(() => {
 		getConnection();
 	}, []);
 
-	const getConnection = () => {
-		setFetchingVersion(true)
+    const getConnection = () => {
+        setFetchingVersion(true)
 		axios
-			.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/avalanche/connect`)
+			.post(`/api/near/connect`, { networkId })
 			.then(res => {
-				const version: AvalancheConnectResponse = res.data
+				const version: NearConnectReponse = res.data
 				setVersion(version)
 				setFetchingVersion(false)
 			})
 			.catch(err => {
-				console.log(err)
+				console.error(err)
 				setFetchingVersion(false)
 			})
 	}
@@ -34,18 +36,19 @@ const Connect = () => {
 		<Col style={{ width: "100%" }}>
 			{fetchingVersion
 				? <LoadingOutlined style={{ fontSize: 24 }} spin />
-				: version
+				: version.length != 0
 					? <Alert
 							message={
 								<Space>
-									Connected to Avalanche!
+                                Connected to Near!
+									<Text code>{networkId}</Text>
 									<Text code>{version}</Text>
 								</Space>
 							}
 							type="success"
 							showIcon
 						/>
-					: <Alert message="Not connected to Avalanche" type="error" showIcon />}
+                    : <Alert message={`Not connected to Near ${networkId}`} type="error" showIcon />}
 		</Col>
 	);
 }
