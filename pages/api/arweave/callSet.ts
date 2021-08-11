@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { interactWrite, readContract } from 'smartweave';
-import TestWeave from 'testweave-sdk'
+import TestWeave from '../../../lib/testweave'
 import Arweave from 'arweave';
 
 

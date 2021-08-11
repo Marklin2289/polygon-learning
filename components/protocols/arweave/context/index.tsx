@@ -40,8 +40,9 @@ export function appStateReducer(state: State, action: Action): State {
   }
 }
 
+// host: 'localhost',
 export const initialState = {
-    host: 'localhost',
+    host: '209.182.238.242',
     port: 80,
     index: 0,
     protocol: 'http',

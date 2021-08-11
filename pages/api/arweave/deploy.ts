@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import Arweave from 'arweave'
-import TestWeave from 'testweave-sdk'
+import TestWeave from '../../../lib/testweave'
 import initialState from 'contracts/arweave/token-pst-contract.json'
 import { readFileSync } from 'fs'
 import { join } from 'path'
