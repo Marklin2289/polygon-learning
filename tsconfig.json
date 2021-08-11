@@ -22,6 +22,6 @@
       "@near/*": ["components/protocols/near/*"] 
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "components/Layout/marked.jsx", "components/Layout/marked.jsx"],
   "exclude": ["node_modules"]
 }

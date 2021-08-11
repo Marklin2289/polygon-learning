@@ -1,4 +1,4 @@
-import { ChainType, StepType } from "types/types"
+import { ChainType, StepType } from "types"
 
 // context stuff 
 export type State = {

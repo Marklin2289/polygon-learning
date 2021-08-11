@@ -1,11 +1,10 @@
 import Head from 'next/head'
 import dynamic from 'next/dynamic'
 import { CHAINS_CONFIG } from "lib/constants"
-import { CHAINS, ChainType } from 'types/types'
+import { CHAINS, ChainType } from 'types'
 import { ComponentType } from 'react'
 import styled from "styled-components"
 import { LoadingOutlined } from '@ant-design/icons'
-import { getChainColors } from 'utils/colors-utils';
 
 type StaticPropsT = {
   params : { chain : CHAINS }
@@ -22,6 +21,7 @@ export async function getStaticProps({ params }: StaticPropsT) {
 
 export async function getStaticPaths() {
   return {
+    // @ts-ignore
     paths: Object.values(CHAINS_CONFIG).map((chain) => { return { params: { chain: chain.id } } } ),
     fallback: false
   };
@@ -34,7 +34,6 @@ type ChainT = {
 export default function Chain({ chainConfig }: ChainT) {
   const chainLabel = chainConfig.label;
   const chainId = chainConfig.id;
-  const { primaryColor: spinnerColor } = getChainColors(chainId)
   
   const Spinner = ({ color }: { color: string }) => {
     return (
@@ -43,7 +42,7 @@ export default function Chain({ chainConfig }: ChainT) {
       </SpinContainer>
     )
   }
-  const dynOptions = { loading: function spinner() { return ( <Spinner color={spinnerColor} /> ) }, ssr: false };
+  const dynOptions = { loading: function spinner() { return ( <Spinner color={'black'} /> ) }, ssr: false };
   const DynChain = (() => {
     if (chainId === CHAINS.AVALANCHE)
       return dynamic(() => import('../components/protocols/avalanche'), dynOptions);

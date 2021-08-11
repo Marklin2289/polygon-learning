@@ -4,7 +4,7 @@ import { Alert, Button, Row, Col, Typography, Space, Steps } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import styled from "styled-components";
 import type { SidebarI, StepButtonsI, StepI } from '@arweave/types'
-import type { StepType } from 'types/types'
+import type { StepType } from 'types'
 
 const { Text } = Typography;
 

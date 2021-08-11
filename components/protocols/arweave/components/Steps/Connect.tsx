@@ -36,7 +36,7 @@ const Connect = () => {
 				network: version
 			})
 		}
-	}, [version, setVersion])
+	}, [version, setVersion, dispatch])
 
 	return (
 		<Col style={{ width: "100%" }}>

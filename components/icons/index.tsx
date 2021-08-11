@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 import { CHAINS_CONFIG } from "lib/constants";
-import { CHAINS } from "types/types"
+import { CHAINS } from "types"
 import { PolygonLogo  } from "./polygon";
 
 const ProtocolLogo = ({ chainId }: { chainId: CHAINS }) => {

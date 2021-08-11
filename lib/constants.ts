@@ -1,4 +1,4 @@
-import { ChainsType, CHAINS } from "types/types";
+import { ChainsType, CHAINS } from "types";
 
 export const CHAINS_CONFIG: ChainsType = {
 	[CHAINS.AVALANCHE]: {

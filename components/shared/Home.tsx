@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Col } from 'antd';
 import styled from "styled-components";
 
-import { CHAINS } from "types/types";
+import { CHAINS } from "types";
 import { CHAINS_CONFIG } from "lib/constants";
-import { getChainColors } from "utils/colors-utils";
+import { getChainColors } from "utils";
 import ProtocolLogo from "components/icons";
 
 const Home = () => {
