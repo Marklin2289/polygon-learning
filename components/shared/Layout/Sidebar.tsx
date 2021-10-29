@@ -2,7 +2,7 @@ import React from 'react';
 import styled, {withTheme} from 'styled-components';
 import {Space, Menu, Dropdown, Progress} from 'antd';
 import {DownOutlined} from '@ant-design/icons';
-import Markdown from 'components/shared/CustomMarkdown';
+import Markdown from '@figment-networks/gitbook-markdown';
 
 import {MarkdownForChainIdT} from 'types';
 import {
