@@ -1722,6 +1722,24 @@
     "@ethersproject/properties" "^5.5.0"
     "@ethersproject/strings" "^5.5.0"
 
+"@figment-networks/custom-markdown@^0.1.1":
+  version "0.1.1"
+  resolved "https://npm.pkg.github.com/download/@figment-networks/custom-markdown/0.1.1/7ebd23eb66feeb4ba24b63df539bf9937e0ccd3095dd062568ef444566a5992b#db9d290d080bf4f47068c283be0f00f2719ad892"
+  integrity sha512-5CvxD2r9wHpd4f91z12TG56fALH8f2dgwGWCcrN9p7FKA3gZLDFzS7dmT1W/yDkqQTP7dwMPHHkGT8xm42bpwA==
+  dependencies:
+    "@ant-design/icons" "^4.7.0"
+    "@types/react-syntax-highlighter" "^13.5.2"
+    antd "^4.16.13"
+    lodash.unescape "^4.0.1"
+    react "^17.0.2"
+    react-dom "^17.0.2"
+    react-markdown "^7.0.1"
+    react-player "^2.9.0"
+    react-syntax-highlighter "^15.4.4"
+    remark-gfm "^2.0.0"
+    simple-react-lightbox "^3.6.9-0"
+    styled-components "^5.3.1"
+
 "@figment-networks/gitbook-markdown@0.1.4":
   version "0.1.4"
   resolved "https://npm.pkg.github.com/download/@figment-networks/gitbook-markdown/0.1.4/c812c19dfe82c79001dbed1551420fe597479ca69a2b55e74d874e5a1b7b43c3#02f8fa0f0f473638a1e9e30ab32c4482c88b45b9"
