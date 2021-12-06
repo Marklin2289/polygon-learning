@@ -29,19 +29,17 @@ export default async function getter(
     const greeterPublicKey = new PublicKey(greeter);
 
     const accountInfo = await connection.getAccountInfo(greeterPublicKey);
-
     if (accountInfo === null) {
       throw new Error('Error: cannot find the greeted account');
     }
 
-    // Find the expected parameters.
-    const greeting = borsh.deserialize(undefined);
+    const greeting = borsh.deserialize(
+      GreetingSchema,
+      GreetingAccount,
+      accountInfo.data,
+    );
 
-    // A little helper
-    console.log(greeting);
-
-    // Pass the counter to the client-side as JSON
-    res.status(200).json(undefined);
+    res.status(200).json(greeting.counter);
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : 'Unknown Error';
     console.log(errorMessage);
