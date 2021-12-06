@@ -11,13 +11,12 @@ export default async function transfer(
     const url = getNodeUrl(network);
     const kit = newKit(url);
 
-    // Restore account using your secret
-    undefined;
-    // Access CELO contract wrapper
-    const celoToken = undefined;
-    // Build the transaction and send
-    const celotx = undefined;
-    // Wait for confirmation of the transaction
+    kit.addAccount(secret);
+    const celoToken = await kit.contracts.getGoldToken();
+    const celotx = await celoToken
+      .transfer(recipient, amount)
+      .send({from: address});
+
     const celoReceipt = await celotx.waitReceipt();
 
     res.status(200).json(celoReceipt.transactionHash);

@@ -14,11 +14,10 @@ export default async function connect(
     kit.addAccount(secret);
 
     // Create a new contract instance with the HelloWorld contract info
-    const instance = undefined;
-    // Call the setName function of our contract
-    const txObject = undefined;
-    // Send a transaction Object to modify the state of our contract
-    let tx = undefined;
+    const instance = new kit.web3.eth.Contract(HelloWorld.abi, contract);
+
+    const txObject = await instance.methods.setName(newMessage);
+    let tx = await kit.sendTransactionObject(txObject, {from: address});
 
     let receipt = await tx.waitReceipt();
 

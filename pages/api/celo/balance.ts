@@ -16,14 +16,14 @@ export default async function balance(
     const url = getNodeUrl(network);
     const kit = newKit(url);
 
-    const goldtoken = undefined;
-    const celoBalance = undefined;
+    const goldtoken = await kit.contracts.getGoldToken();
+    const celoBalance = await goldtoken.balanceOf(address);
 
-    const stabletokenUSD = undefined;
-    const cUSDBalance = undefined;
+    const stabletokenUSD = await kit.contracts.getStableToken('cUSD');
+    const cUSDBalance = await stabletokenUSD.balanceOf(address);
 
-    const stabletokenEUR = undefined;
-    const cEURBalance = undefined;
+    const stabletokenEUR = await kit.contracts.getStableToken('cEUR');
+    const cEURBalance = await stabletokenEUR.balanceOf(address);
 
     res.status(200).json({
       attoCELO: celoBalance.toString(),

@@ -14,9 +14,9 @@ export default async function connect(
     const {network} = req.body;
     const url = getNodeUrl(network);
     const kit = newKit(url);
-    const account = undefined;
-    const address = undefined;
-    const secret = undefined;
+    const account = kit.web3.eth.accounts.create();
+    const address = account.address;
+    const secret = account.privateKey;
 
     res.status(200).json({
       address,

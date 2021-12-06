@@ -19,8 +19,10 @@ export default async function connect(
 
     kit.addAccount(secret);
 
-    // TODO: Create a transaction to deploy the contract
-
+    let tx = await kit.sendTransaction({
+      from: address,
+      data: HelloWorld.bytecode,
+    });
     const receipt = await tx.waitReceipt();
 
     res.status(200).json({
