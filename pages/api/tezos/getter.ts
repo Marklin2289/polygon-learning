@@ -14,8 +14,7 @@ export default async function getter(
 
     await importKey(tezos, email, password, mnemonic, secret);
 
-    // use the contract module to get the storage
-    const counter = undefined;
+    const counter = await tezos.contract.getStorage(contract);
 
     res.status(200).json(counter);
   } catch (error) {

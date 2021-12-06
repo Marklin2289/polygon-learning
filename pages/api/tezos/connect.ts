@@ -10,8 +10,8 @@ export default async function connect(
   try {
     const {network} = req.body;
     const url = getNodeUrl(network);
-    const toolkit = undefined;
-    const chainId = undefined;
+    const toolkit = new TezosToolkit(url);
+    const chainId = await toolkit.rpc.getChainId();
     if (validateChain(chainId) != 3) {
       throw Error('invalid chain Id');
     }

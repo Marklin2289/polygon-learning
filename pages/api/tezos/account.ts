@@ -21,9 +21,7 @@ export default async function account(
     const url = getNodeUrl(network);
     const tezos = new TezosToolkit(url);
 
-    // call the importKey method
-    undefined;
-    throw new Error('Please complete the code');
+    await importKey(tezos, email, password, mnemonic, secret);
 
     res.status(200).json(true);
   } catch (error) {

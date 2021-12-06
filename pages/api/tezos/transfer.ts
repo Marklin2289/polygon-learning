@@ -13,11 +13,14 @@ export default async function transfer(
     const url = getNodeUrl(network);
     const tezos = new TezosToolkit(url);
 
-    await importKey(undefined);
+    await importKey(tezos, email, password, mnemonic, secret);
 
-    // call the transfer method
+    const operation = await tezos.contract.transfer({
+      to: recipient,
+      amount: amount,
+      mutez: true,
+    });
 
-    // await for confirmation
     await operation.confirmation(1);
 
     res.status(200).json(operation.hash);

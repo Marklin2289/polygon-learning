@@ -10,7 +10,7 @@ export default async function balance(
     const {address, network} = req.body;
     const url = getNodeUrl(network);
     const toolkit = new TezosToolkit(url);
-    const balance = undefined;
+    const balance = await toolkit.tz.getBalance(address);
     res.status(200).json(balance.toString());
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : 'Unknown Error';

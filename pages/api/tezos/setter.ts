@@ -11,15 +11,15 @@ export default async function setter(
     const {network, mnemonic, email, password, secret, contract} = req.body;
     const url = getNodeUrl(network);
     const tezos = new TezosToolkit(url);
+
     await importKey(tezos, email, password, mnemonic, secret);
 
     const n = 1;
-    // load the interface of the contract
-    const counterContract = undefined;
-    // call the increment function of the contract
+    // Load the interface of the contract
+    const counterContract = await tezos.contract.at(contract);
+    // Call the increment function of the contract
     const transaction = await counterContract.methods.increment(n).send();
-
-    // await for confirmation
+    // Await confirmations
     await transaction.confirmation(3);
 
     res.status(200).json(transaction.hash);
