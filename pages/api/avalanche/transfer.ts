@@ -11,23 +11,30 @@ export default async function transfer(
     const client = getAvalancheClient(network);
     const chain = client.XChain();
     const keychain = chain.keyChain();
-    // Using keychain, load the private key to sign transactions
-    undefined;
+    keychain.importKey(secret);
 
-    // Fetch UTXOs (unspent transaction outputs)
-    const {utxos} = undefined;
+    // Fetch UTXO (i.e unspent transaction outputs)
+    const {utxos} = await chain.getUTXOs(address);
 
     // Determine the real asset ID from its symbol/alias
+    // We can also get the primary asset ID with chain.getAVAXAssetID() call
     const binTools = BinTools.getInstance();
     const assetInfo = await chain.getAssetDescription('AVAX');
     const assetID = binTools.cb58Encode(assetInfo.assetID);
 
     // Create a new transaction
-    const transaction = await chain.buildBaseTx(undefined);
+    const transaction = await chain.buildBaseTx(
+      utxos, // Unspent transaction outputs
+      new BN(navax), // Transaction amount, formatted as a BigNumber
+      assetID, // AVAX asset
+      [recipient], // Addresses we are sending the funds to (receiver)
+      [address], // Addresses being used to send the funds from the UTXOs provided (sender)
+      [address], // Addresses that can spend the change remaining from the spent UTXOs (payer)
+    );
 
     // Sign the transaction and send it to the network
-    undefined;
-    undefined;
+    const signedTx = transaction.sign(keychain);
+    const hash = await chain.issueTx(signedTx);
 
     res.status(200).json(hash);
   } catch (error) {

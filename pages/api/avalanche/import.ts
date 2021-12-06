@@ -21,9 +21,9 @@ export default async function (
     const [cAddress] = [cKeypair.getAddressString()];
 
     // Get the real ID for X-Chain
-    const xChainId = undefined;
+    const xChainId = await client.Info().getBlockchainID('X');
 
-    // Fetch UTXOs (unspent transaction outputs)
+    // Fetch UTXOs (i.e unspent transaction outputs)
     const {utxos} = await cChain.getUTXOs(cAddress, xChainId);
 
     // Derive Eth-like address from the private key
@@ -35,7 +35,13 @@ export default async function (
     console.log('Ethereum-style address: ', ethAddr);
 
     // Generate an unsigned import transaction
-    const importTx = await cChain.buildImportTx(undefined);
+    const importTx = await cChain.buildImportTx(
+      utxos,
+      ethAddr,
+      [cAddress],
+      xChainId,
+      [cAddress],
+    );
 
     // Sign and send import transaction
     const hash = await cChain.issueTx(importTx.sign(cKeychain));

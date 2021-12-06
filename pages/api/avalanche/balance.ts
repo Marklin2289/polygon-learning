@@ -16,10 +16,10 @@ export default async function balance(
   res: NextApiResponse<string>,
 ) {
   try {
-    const {address, network} = req.body;
+    const {network, address} = req.body;
     const client = getAvalancheClient(network);
     const chain = client.XChain();
-    const balance = undefined;
+    const balance = (await chain.getBalance(address, 'AVAX')) as BalanceT;
     res.status(200).json(balance.balance);
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : 'Unknown Error';
