@@ -32,11 +32,26 @@ export default async function connect(
     };
 
     // 2. Initialize a secure Secret client
-    const client = new SigningCosmWasmClient(undefined);
+    const client = new SigningCosmWasmClient(
+      url,
+      address,
+      (signBytes) => signingPen.sign(signBytes),
+      txEncryptionSeed,
+      fees,
+    );
 
     // 3. Send tokens
-    const memo = 'sendTokens example'; // Optional memo to identify the transaction
-    const sent = await client.sendTokens(undefined);
+    const memo = 'sendTokens example'; // optional memo
+    const sent = await client.sendTokens(
+      address,
+      [
+        {
+          amount: txAmount,
+          denom: 'uscrt',
+        },
+      ],
+      memo,
+    );
 
     // 4. Query the tx result
     const query = {id: sent.transactionHash};

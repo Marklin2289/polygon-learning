@@ -11,10 +11,8 @@ export default async function connect(
     const {address} = req.body;
     const client = new CosmWasmClient(url);
 
-    // Query the Account object
-    const account = undefined;
-    // Return the balance
-    const balance = undefined;
+    const account = await client.getAccount(address);
+    const balance = account?.balance[0].amount as string;
 
     res.status(200).json(balance);
   } catch (error) {
