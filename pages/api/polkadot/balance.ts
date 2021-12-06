@@ -13,9 +13,8 @@ export default async function balance(
     const url = getNodeUrl(network);
     provider = new WsProvider(url);
     const api = await ApiPromise.create({provider: provider});
-    const {data: balance} = undefined;
-    const amount = undefined;
-    await provider.disconnect();
+    const {data: balance} = await api.query.system.account(address);
+    const amount = balance.free.toNumber();
     res.status(200).json(amount);
   } catch (error) {
     if (provider) {

@@ -13,16 +13,15 @@ export default async function estimate(
     provider = new WsProvider(url);
     const api = await ApiPromise.create({provider: provider});
 
-    // A generic address for recipient (//Alice) and amount to send
+    // A generic address for recipient (//Alice) and an amount to send
     const recipient = '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY';
-    const transferAmount = '1000000000';
+    const transferAmount = '1000000000'; // 1 milli WND
 
     // Transfer tokens
-    const transfer = undefined;
-    const info = undefined;
-    const fees = undefined;
+    const transfer = api.tx.balances.transfer(recipient, transferAmount);
+    const info = await transfer.paymentInfo(address);
+    const fees = info.partialFee.toNumber();
 
-    await provider.disconnect();
     res.status(200).json(fees);
   } catch (error) {
     if (provider) {

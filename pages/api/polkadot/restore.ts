@@ -7,9 +7,9 @@ export default async function restore(
 ) {
   try {
     const {mnemonic} = req.body;
-    const keyring = undefined;
-    const account = undefined;
-    const address = undefined;
+    const keyring = new Keyring({type: 'sr25519'});
+    const account = keyring.addFromUri(mnemonic);
+    const address = account.address;
     res.status(200).json(address);
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : 'Unknown Error';

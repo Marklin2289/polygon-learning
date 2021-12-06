@@ -13,8 +13,7 @@ export default async function deposit(
     const url = getNodeUrl(network);
     provider = new WsProvider(url);
     const api = await ApiPromise.create({provider: provider});
-    const deposit = undefined;
-    await provider.disconnect();
+    const deposit = api.consts.balances.existentialDeposit.toNumber();
     res.status(200).json(deposit);
   } catch (error) {
     if (provider) {

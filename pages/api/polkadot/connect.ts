@@ -11,11 +11,10 @@ export default async function connect(
   try {
     const {network} = req.body;
     const url = getNodeUrl(network);
-    provider = new WsProvider(url);
-    const api = undefined;
-    const rawVersion = undefined;
+    const provider = new WsProvider(url);
+    const api = await ApiPromise.create({provider: provider});
+    const rawVersion = await api.rpc.system.version();
     const version = rawVersion.toHuman();
-    await provider.disconnect();
     res.status(200).json(version);
   } catch (error) {
     if (provider) {
