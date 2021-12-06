@@ -14,15 +14,10 @@ export default async function (
   try {
     const config = configFromNetwork(network);
     const keypair = KeyPair.fromString(secret);
-
-    // Again you will need to set your keystore
-    config.keyStore?.undefined;
-
+    config.keyStore?.setKey('testnet', accountId, keypair);
     const near = await connect(config);
     const account = await near.account(accountId);
-
-    // Time to deploy the Smart Contract
-    const response = undefined;
+    const response = await account.deployContract(fs.readFileSync(WASM_PATH));
     return res.status(200).json(response.transaction.hash);
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : 'Unknown Error';

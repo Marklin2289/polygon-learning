@@ -10,10 +10,9 @@ export default async function (
   try {
     const config = configFromNetwork(network);
     const client = await connect(config);
-    const account = undefined;
-    const balance = undefined;
-    console.log(balance);
-    return res.status(200).json(balance);
+    const account = await client.account(accountId);
+    const balance = await account.getAccountBalance();
+    return res.status(200).json(balance.available);
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : 'Unknown Error';
     return res.status(500).json(errorMessage);

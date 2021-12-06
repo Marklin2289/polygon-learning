@@ -9,9 +9,9 @@ export default async function connection(
   const {network} = req.body;
   try {
     const config = configFromNetwork(network);
-    const near = undefined;
-    const provider = undefined;
-    const status = undefined;
+    const near = await connect(config);
+    const provider = near.connection.provider;
+    const status = await provider.status();
     return res.status(200).json(status.version.version);
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : 'Unknown Error';

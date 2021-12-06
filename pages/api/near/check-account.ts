@@ -10,10 +10,9 @@ export default async function (
   try {
     const config = configFromNetwork(network);
     const near = await connect(config);
-    // try to query the account info of the
-    const accountInfo = undefined;
+    const accountInfo = await near.account(freeAccountId);
     try {
-      undefined;
+      await accountInfo.state();
       return res.status(200).json(false);
     } catch (error) {
       return res.status(200).json(true);

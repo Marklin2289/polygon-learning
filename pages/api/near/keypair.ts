@@ -11,9 +11,9 @@ export default function connection(
   res: NextApiResponse<ReponseT | string>,
 ) {
   try {
-    const keypair = undefined;
-    const secret = undefined;
-    const address = undefined;
+    const keypair = KeyPair.fromRandom('ed25519');
+    const secret = keypair.toString();
+    const address = keypair.getPublicKey().toString();
     if (!secret || !address) {
       throw new Error('Please complete the code.');
     }

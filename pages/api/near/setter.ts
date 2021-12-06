@@ -14,8 +14,14 @@ export default async function (
 
     const near = await connect(config);
     const account = await near.account(accountId);
-    // Look at functionCall and pass the expected args
-    // ... fill here
+
+    const optionsCall = {
+      contractId: accountId,
+      methodName: 'set_greeting',
+      args: {message: newMessage},
+    };
+    const response = await account.functionCall(optionsCall);
+
     return res.status(200).json(response.transaction.hash);
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : 'Unknown Error';
