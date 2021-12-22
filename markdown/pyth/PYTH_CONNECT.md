@@ -52,18 +52,18 @@ In `components/pyth/components/Connect.tsx`, implement `getPythData` by creating
 
 ```typescript
 //...
-  const getPythData = async (checked: boolean) => {
-    const SOLANA_CLUSTER_NAME: Cluster = 'devnet';
-    const connection = new Connection(clusterApiUrl(SOLANA_CLUSTER_NAME));
-    const pythPublicKey = getPythProgramKeyForCluster(SOLANA_CLUSTER_NAME);
-    const pythConnection = new PythConnection(connection, pythPublicKey);
-    pythConnection.onPriceChange((product, price) => {
-      // sample output:
-      // SRM/USD: $8.68725 ±$0.0131
-      if (product.symbol === "Crypto.SOL/USD" && price.price && price.confidence) {
-
-
-
+pythConnection.undefined((product, price) => {
+  // sample output: SOL/USD: $108.68725 ±$0.0131
+  if (undefined === 'Crypto.SOL/USD' && undefined && undefined) {
+    console.log(`${product.symbol}: $${price.price} \xB1$${price.confidence}`);
+    setPrice(price.price);
+    setSymbol('Crypto.SOL/USD');
+  } else if (product.symbol === 'Crypto.SOL/USD' && !price.price) {
+    console.log(`${product.symbol}: price currently unavailable`);
+    setPrice(0);
+    setSymbol('Crypto.SOL/USD');
+  }
+});
 //...
 ```
 
