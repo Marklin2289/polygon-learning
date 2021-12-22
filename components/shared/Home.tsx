@@ -30,19 +30,25 @@ const Home = () => {
           </Brand>
         </Title>
         <Row>
-          <Col span={8}>
+          <Col span={6}>
             <ChainRow title={'Data Indexing'}>
               <Protocol chain={CHAINS.THE_GRAPH} />
             </ChainRow>
           </Col>
 
-          <Col span={8}>
+          <Col span={6}>
+            <ChainRow title={'Oracles'}>
+              <Protocol chain={CHAINS.PYTH} />
+            </ChainRow>
+          </Col>
+
+          <Col span={6}>
             <ChainRow title={'Identity'}>
               <Protocol chain={CHAINS.CERAMIC} />
             </ChainRow>
           </Col>
 
-          <Col span={8}>
+          <Col span={6}>
             <ChainRow title={'Storage'}>
               <Protocol chain={CHAINS.ARWEAVE} />
             </ChainRow>

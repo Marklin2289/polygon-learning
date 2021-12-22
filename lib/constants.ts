@@ -23,6 +23,8 @@ import {
   THE_GRAPH_NETWORKS,
   ARWEAVE_PROTOCOLS,
   ARWEAVE_NETWORKS,
+  PYTH_PROTOCOLS,
+  PYTH_NETWORKS,
 } from 'types';
 
 export const GRID_LAYOUT = [13, 11];
@@ -295,6 +297,36 @@ export const CHAINS_CONFIG: ChainsType = {
       {
         id: PROTOCOL_STEPS_ID.RESTORE_ACCOUNT,
         title: 'Restore your account',
+      },
+      {
+        id: PROTOCOL_STEPS_ID.FINAL,
+        title: '🎓 Pathway complete!',
+        isOneColumn: true,
+      },
+    ],
+  },
+  [CHAINS.PYTH]: {
+    id: CHAINS.PYTH,
+    label: 'Pyth',
+    active: true,
+    logoUrl:
+      'https://miro.medium.com/fit/c/262/262/1*IJmOPkddaHkuvONbkzCQiQ.jpeg',
+    protocol: PYTH_PROTOCOLS.RPC,
+    network: PYTH_NETWORKS.DEVNET,
+    steps: [
+      {
+        id: PROTOCOL_STEPS_ID.PREFACE,
+        title: 'Welcome to the Pyth Pathway',
+        isOneColumn: true,
+      },
+      {
+        id: PROTOCOL_STEPS_ID.PROJECT_SETUP,
+        title: 'Setup the project',
+        isOneColumn: true,
+      },
+      {
+        id: PROTOCOL_STEPS_ID.PYTH_CONNECT,
+        title: 'Query Pyth on Solana',
       },
       {
         id: PROTOCOL_STEPS_ID.FINAL,
