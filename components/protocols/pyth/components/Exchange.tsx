@@ -50,12 +50,16 @@ const signalListener = new EventEmitter();
 const Exchange = () => {
   const {state, dispatch} = useGlobalState();
   // const wallet = useWallet();
+
+  // Fake wallet for testing.
   const [wallet, setWallet] = useState<FakeWallet>({
     sol_balance: 100,
     usdc_balance: 10000,
   });
+  // state for tracking user worth with current Market Price.
   const [worth, setWorth] = useState({initial: 0, current: 0});
 
+  // Reset the wallet to the initial state.
   const resetWallet = (sol_amount = 10) => {
     if (!price) return;
     setWallet({
@@ -65,7 +69,9 @@ const Exchange = () => {
     const worth = sol_amount * price * 2;
     setWorth({initial: worth, current: worth});
   };
+  // amount of Ema to buy/sell signal.
   const [yieldExpectation, setYield] = useState<number>(0.001);
+  const [orderSize, setOrderSize] = useState<number>(20); // USDC
   const [price, setPrice] = useState<number | undefined>(undefined);
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
   const [orderBook, setOrderbook] = useState<Order[]>([]);
@@ -76,37 +82,42 @@ const Exchange = () => {
         type: 'SetIsCompleted',
       });
     }
-
+    // update the current worth each price update.
     const currentWorth = wallet?.sol_balance * price! + wallet.usdc_balance;
-
     setWorth({...worth, current: currentWorth});
   }, [price, setPrice]);
 
   useEffect(() => {
+    signalListener.once('*', () => {
+      resetWallet();
+    });
     const buyHandler = signalListener.on('buy', (price: number) => {
+      if (wallet.usdc_balance <= orderSize) return; // not enough balance
       setOrderbook((_orderBook) => [
         {
           side: 'buy',
-          size: 20,
+          size: orderSize,
           price: price,
           fromToken: 'usdc',
           toToken: 'sol',
         },
         ..._orderBook,
       ]);
-      const solChange = 20 / price!;
+      const solChange = orderSize / price!;
 
       setWallet((_wallet) => ({
         sol_balance: _wallet.sol_balance + solChange,
-        usdc_balance: _wallet.usdc_balance - 20,
+        usdc_balance: _wallet.usdc_balance - orderSize,
       }));
     });
 
     const sellHandler = signalListener.on('sell', (price: number) => {
+      const orderSizeSol = orderSize / price;
+      if (wallet.sol_balance <= orderSizeSol) return; // not enough balance
       setOrderbook((_orderBook) => [
         {
           side: 'sell',
-          size: 0.1,
+          size: orderSizeSol,
           price: price,
           fromToken: 'sol',
           toToken: 'usdc',
@@ -115,14 +126,14 @@ const Exchange = () => {
       ]);
 
       setWallet((_wallet) => ({
-        sol_balance: _wallet.sol_balance - 0.1,
-        usdc_balance: _wallet.usdc_balance + 0.1 * price!,
+        sol_balance: _wallet.sol_balance - orderSizeSol,
+        usdc_balance: _wallet.usdc_balance + orderSizeSol * price!,
       }));
     });
     return () => {
       signalListener.removeAllListeners();
     };
-  }, []);
+  }, [yieldExpectation, orderSize, wallet]);
 
   const [data, setData] = useState<any[]>([]);
   const getPythData = async (checked: boolean) => {
@@ -227,6 +238,12 @@ const Exchange = () => {
             <InputNumber
               value={yieldExpectation}
               onChange={(e) => setYield(e)}
+              prefix="%"
+            />
+            <InputNumber
+              value={orderSize}
+              onChange={(e) => setOrderSize(e)}
+              prefix="USDC"
             />
           </Card>
         </Space>
@@ -237,16 +254,25 @@ const Exchange = () => {
           >
             <Row>
               <Col span={12}>
-                <Statistic value={wallet?.sol_balance} title={'SOL'} />
+                <Statistic
+                  value={wallet?.sol_balance}
+                  precision={6}
+                  title={'SOL'}
+                />
               </Col>
 
               <Col span={12}>
-                <Statistic value={wallet?.usdc_balance} title={'USDC'} />
+                <Statistic
+                  value={wallet?.usdc_balance}
+                  precision={6}
+                  title={'USDC'}
+                />
               </Col>
 
               <Col span={12}>
                 <Statistic
                   value={wallet?.sol_balance * price! + wallet.usdc_balance}
+                  precision={6}
                   title={'TOTAL WORTH'}
                 />
               </Col>
@@ -255,7 +281,7 @@ const Exchange = () => {
                 <Statistic
                   value={(worth.initial / worth.current) * 100 - 100}
                   prefix={'%'}
-                  precision={4}
+                  precision={6}
                   title={'Change'}
                 />
               </Col>
@@ -265,21 +291,39 @@ const Exchange = () => {
         <Card>
           <Chart data={data} />
         </Card>
-        <Table
-          dataSource={orderBook}
-          columns={[
-            {
-              title: 'Side',
-              dataIndex: 'side',
-              key: 'side',
-            },
-            {
-              title: 'Price',
-              dataIndex: 'price',
-              key: 'price',
-            },
-          ]}
-        ></Table>
+        <Card>
+          <Statistic value={orderBook.length} title={'Number of Operations'} />
+          <Table
+            dataSource={orderBook}
+            columns={[
+              {
+                title: 'Side',
+                dataIndex: 'side',
+                key: 'side',
+              },
+              {
+                title: 'Price',
+                dataIndex: 'price',
+                key: 'price',
+              },
+              {
+                title: 'Size',
+                dataIndex: 'size',
+                key: 'size',
+              },
+              {
+                title: 'From',
+                dataIndex: 'fromToken',
+                key: 'fromToken',
+              },
+              {
+                title: 'To',
+                dataIndex: 'toToken',
+                key: 'toToken',
+              },
+            ]}
+          ></Table>
+        </Card>
       </Space>
     </Col>
   );
