@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="50e2cf1d-9ce4-4fcd-a912-4d17de2cc7ec" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/pages/api/solana/balance.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pages/api/solana/balance.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/api/solana/connect.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pages/api/solana/connect.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/api/solana/deploy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pages/api/solana/deploy.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/api/solana/fund.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pages/api/solana/fund.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/api/solana/getter.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pages/api/solana/getter.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/api/solana/greeter.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pages/api/solana/greeter.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/api/solana/keypair.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pages/api/solana/keypair.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/api/solana/setter.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pages/api/solana/setter.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/api/solana/transfer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pages/api/solana/transfer.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="GoLibraries">
+    <option name="indexEntireGoPath" value="false" />
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="bfts33vy" />
+  </component>
+  <component name="ProjectId" id="20N3aOAKFTil4JtBnbkw4br1n3R" />
+  <component name="ProjectViewState">
+    <option name="flattenPackages" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="dart.analysis.tool.window.visible" value="false" />
+    <property name="go.formatter.settings.were.checked" value="true" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.modules.go.list.on.any.changes.was.set" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="yarn" />
+    <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
+    <property name="prettierjs.PrettierConfiguration.Package" value="$PROJECT_DIR$/node_modules/prettier" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+    <property name="ts.external.directory.path" value="$PROJECT_DIR$/node_modules/typescript/lib" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunAnythingCache">
+    <myKeys>
+      <visibility group="Gradle Tasks" flag="true" />
+      <visibility group="Grunt" flag="true" />
+      <visibility group="Gulp" flag="true" />
+      <visibility group="Maven Goals" flag="true" />
+      <visibility group="Node.js" flag="true" />
+      <visibility group="Recent projects" flag="true" />
+      <visibility group="Run configurations" flag="true" />
+      <visibility group="npm" flag="true" />
+      <visibility group="yarn" flag="true" />
+    </myKeys>
+  </component>
+  <component name="RustProjectSettings">
+    <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="50e2cf1d-9ce4-4fcd-a912-4d17de2cc7ec" name="Changes" comment="" />
+      <created>1635871281146</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1635871281146</updated>
+      <workItem from="1635871284314" duration="10003000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VgoProject">
+    <integration-enabled>true</integration-enabled>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>

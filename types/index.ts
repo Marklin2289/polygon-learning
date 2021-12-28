@@ -321,6 +321,7 @@ export enum PROTOCOL_STEPS_ID {
   SUBGRAPH_SCHEMA = 'SUBGRAPH_SCHEMA',
   SUBGRAPH_MAPPINGS = 'SUBGRAPH_MAPPINGS',
   PYTH_CONNECT = 'PYTH_CONNECT',
+  PYTH_EXCHANGE = 'PYTH_EXCHANGE',
 }
 
 export type AlertT = 'success' | 'info' | 'warning' | 'error' | undefined;

@@ -7,6 +7,7 @@ const MARKDOWN_PATH = path.resolve('markdown');
 
 export function fetchMarkdownForChainId(chainId: CHAINS): MarkdownForChainIdT {
   const steps = CHAINS_CONFIG[chainId].steps.map((step) => step.id);
+  console.log(steps);
 
   return steps.reduce((markdownMap, stepId) => {
     // We have a special case for preface because it's common to every pathway
