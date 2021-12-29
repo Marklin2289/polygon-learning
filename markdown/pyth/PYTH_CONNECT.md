@@ -2,14 +2,6 @@ In this tutorial, we're going to interact with Pyth price data on the Solana blo
 
 Note that this pathway will not cover the basics, instead we will assume that you have completed both the Solana 101 pathway and the Solana Wallet tutorial. A working knowledge of TypeScript/JavaScript and React hooks is strongly recommended for this pathway.
 
-# ⛓ Working with on-chain data
-
-Pyth provides us with a few tools to consume the published data. For working with price feeds, there is the [JavaScript client](https://github.com/pyth-network/pyth-client-js) `pyth-client-js` which we installed during the setup for this project.
-
-There is also a [Rust client](https://github.com/pyth-network/pyth-client-rs), which can be used in on-chain program development, and a [Neon EVM](https://github.com/pyth-network/pyth-neon) client that provides access to Pyth data through Solidity smart contracts. A Python client is coming soon, as well.
-
-Finally, there is a client API for on-chain Pyth programs, [pyth-client](https://github.com/pyth-network/pyth-client).
-
 ---
 
 # 🧐 What is Pyth, anyway?
@@ -31,6 +23,14 @@ Pyth uses three types of account on Solana:
 Read more about [Pyth's account structure](https://docs.pyth.network/how-pyth-works/account-structure) on the official documentation.
 
 ---
+
+# ⛓ Working with on-chain data
+
+Pyth provides us with a few tools to consume the published data. For working with price feeds, there is the [JavaScript client](https://github.com/pyth-network/pyth-client-js) `pyth-client-js` which we installed during the setup for this project.
+
+There is also a [Rust client](https://github.com/pyth-network/pyth-client-rs), which can be used in on-chain program development, and a [Neon EVM](https://github.com/pyth-network/pyth-neon) client that provides access to Pyth data through Solidity smart contracts. A Python client is coming soon, as well.
+
+Finally, there is a client API for on-chain Pyth programs, [pyth-client](https://github.com/pyth-network/pyth-client).
 
 # 🤑 Aggregate price
 
@@ -56,7 +56,7 @@ Read more about [best practices](https://docs.pyth.network/consumers/best-practi
 
 # 🧠 Exponents
 
-Not all price accounts maintain their data in floating point format. It is necessary to use an exponent to convert price data from fixed-point to floating point. The price (including the decimal) is calculated by taking the `price` field from a Pyth price account and multiplying it by 10^`exponent`.
+Not all price accounts maintain their data in floating point format. It is necessary to use an exponent to convert price data from fixed-point to floating point. The readable price (including the decimal, i.e. 150.00473) is calculated by taking the `price` field from a Pyth price account and multiplying it by 10^`exponent`. This will be a negative exponent, which will move the decimal to the left.
 
 ---
 
@@ -85,14 +85,7 @@ const Connect = () => {
       ) {
         // ...
     });
-
-    if (!checked) {
-      message.info('Stopping feed!');
-      pythConnection.stop();
-    } else {
-      message.info('Starting feed!');
-      pythConnection.start();
-    }
+    // ...
   };
 //...
 ```

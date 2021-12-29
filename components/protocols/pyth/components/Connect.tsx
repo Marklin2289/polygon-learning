@@ -1,4 +1,13 @@
-import {Col, Space, Typography, Switch, message, Statistic, Card} from 'antd';
+import {
+  Col,
+  Space,
+  Typography,
+  Switch,
+  message,
+  Statistic,
+  Card,
+  Tooltip,
+} from 'antd';
 import {useGlobalState} from 'context';
 import {SyncOutlined} from '@ant-design/icons';
 import {useEffect, useState} from 'react';
@@ -110,9 +119,15 @@ const Connect = () => {
               />
             </>
           )}{' '}
-          <Statistic value={price} prefix={<DollarCircleFilled />} />{' '}
-          <Statistic value={confidence} prefix={<AimOutlined />} />{' '}
-          <Statistic value={exponent} prefix={<CalculatorFilled />} />{' '}
+          <Tooltip title="Price" placement="right">
+            <Statistic value={price} prefix={<DollarCircleFilled />} />
+          </Tooltip>{' '}
+          <Tooltip title="Confidence Interval" placement="right">
+            <Statistic value={confidence} prefix={<AimOutlined />} />
+          </Tooltip>{' '}
+          <Tooltip title="Exponent" placement="right">
+            <Statistic value={exponent} prefix={<CalculatorFilled />} />
+          </Tooltip>{' '}
         </Card>
         <Space direction="horizontal" size="large"></Space>
       </Space>

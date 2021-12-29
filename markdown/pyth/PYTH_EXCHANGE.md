@@ -149,9 +149,82 @@ const buyHandler = signalListener.on('buy', (price: number) => {
 
 ---
 
+# 🏋️ Challenge #2
+
+{% hint style="tip" %}
+In `components/pyth/components/Exchange.tsx` complete the `sellHandler` function.
+{% endhint %}
+
+**Take a few minutes to figure this out**
+
+```typescript
+//...
+const buyHandler = signalListener.on('buy', (price: number) => {
+  if (wallet.usdc_balance <= orderSize) return; // not enough balance
+  setOrderbook((_orderBook) => [
+    {
+      side: 'buy',
+      size: orderSize,
+      price: price,
+      fromToken: 'usdc',
+      toToken: 'sol',
+    },
+    ..._orderBook,
+  ]);
+  const solChange = orderSize / price!;
+
+  setWallet((_wallet) => ({
+    sol_balance: _wallet.sol_balance + solChange,
+    usdc_balance: _wallet.usdc_balance - orderSize,
+  }));
+});
+//...
+```
+
+**Need some help?** Check out these hints 👇
+
+- ?
+
+Still not sure how to do this? No problem! The solution is below so you don't get stuck.
+
+---
+
+# 😅 Solution
+
+```typescript
+// solution
+//...
+const buyHandler = signalListener.on('buy', (price: number) => {
+  if (wallet.usdc_balance <= orderSize) return; // not enough balance
+  setOrderbook((_orderBook) => [
+    {
+      side: 'buy',
+      size: orderSize,
+      price: price,
+      fromToken: 'usdc',
+      toToken: 'sol',
+    },
+    ..._orderBook,
+  ]);
+  const solChange = orderSize / price!;
+
+  setWallet((_wallet) => ({
+    sol_balance: _wallet.sol_balance + solChange,
+    usdc_balance: _wallet.usdc_balance - orderSize,
+  }));
+});
+//...
+```
+
+**What happened in the code above?**
+
+- ?
+
+---
+
 # ✅ Make sure it works
 
-Once you've made the necessary changes to `components/pyth/components/Exchange.tsx` and saved the file, click on the toggle switch labeled "Price feed Off" on the right side of the screen to connect & start displaying the price chart as well as the liquidation bot.
+Once you've made the necessary changes to `components/pyth/components/Exchange.tsx` and saved the file, click on the toggle switch labeled "Price feed Off" on the right side of the screen to connect & start displaying the price chart as well as the wallet statistics.
 
 ---
 

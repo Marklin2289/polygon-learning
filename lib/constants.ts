@@ -330,18 +330,9 @@ export const CHAINS_CONFIG: ChainsType = {
         skippable: true,
       },
       {
-        id: PROTOCOL_STEPS_ID.PYTH_LIQUIDATION_BOT,
-        title: 'Liquidation Bot',
-        skippable: true,
-      },
-      {
-        id: PROTOCOL_STEPS_ID.PYTH_AMM,
-        title: 'On-Chain AMM',
-        skippable: true,
-      },
-      {
         id: PROTOCOL_STEPS_ID.PYTH_EXCHANGE,
         title: 'Exchange on Solana',
+        skippable: true,
       },
       {
         id: PROTOCOL_STEPS_ID.FINAL,
