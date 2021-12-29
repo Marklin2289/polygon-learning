@@ -19,16 +19,16 @@ import {DollarCircleFilled} from '@ant-design/icons';
 import {Chart} from './Chart';
 import Wallet from '@project-serum/sol-wallet-adapter';
 import {EventEmitter} from 'events';
+import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
 
-const SOLANA_CLUSTER_NAME: Cluster = 'devnet';
-const connection = new Connection(clusterApiUrl(SOLANA_CLUSTER_NAME));
-const pythPublicKey = getPythProgramKeyForCluster(SOLANA_CLUSTER_NAME);
+const connection = new Connection(clusterApiUrl(PYTH_NETWORKS.DEVNET));
+const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
 const pythConnection = new PythConnection(connection, pythPublicKey);
 
 let _wallet: Wallet | null = null;
 const useWallet = (): Wallet => {
   if (_wallet) return _wallet;
-  _wallet = new Wallet('https://www.sollet.io', SOLANA_CLUSTER_NAME);
+  _wallet = new Wallet('https://www.sollet.io', SOLANA_NETWORKS.DEVNET);
   return _wallet;
 };
 
@@ -170,9 +170,12 @@ const Exchange = () => {
         const window = 10;
         const smoothingFactor = 2 / (window + 1);
         /**
-         * Calculate simple moving average and Exponential Moving Average.
-         * https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
-         * Exponential Average is has a better reaction to price changes.
+         * Calculate Simple moving average:
+         *   https://en.wikipedia.org/wiki/Moving_average#Simple_moving_average
+         * Calculate Exponential moving average:
+         *   https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+         * The Exponential moving average has a better reaction to price changes.
+         *
          * Ref: https://blog.oliverjumpertz.dev/the-moving-average-simple-and-exponential-theory-math-and-implementation-in-javascript
          */
         setData((data) => {
@@ -207,12 +210,10 @@ const Exchange = () => {
     });
 
     if (!checked) {
-      message.info('Stopping feed!');
-      console.log('Stopping Pyth price feed...');
+      message.info('Stopping Pyth price feed!');
       pythConnection.stop();
     } else {
-      message.info('Starting feed!');
-      console.log('Starting Pyth price feed...');
+      message.info('Starting Pyth price feed!');
       pythConnection.start();
     }
   };

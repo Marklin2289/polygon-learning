@@ -128,10 +128,9 @@ export enum POLYGON_NETWORKS {
 }
 
 export enum PYTH_NETWORKS {
-  MAINNET = 'MAINNET',
+  MAINNET = 'mainnet-beta',
+  TESTNET = 'testnet',
   DEVNET = 'devnet',
-  DATAHUB = 'datahub',
-  LOCALNET = 'localnet',
 }
 
 export enum SOLANA_NETWORKS {
@@ -180,6 +179,8 @@ export enum NETWORK {
   DATAHUB,
   TESTNET,
   LOCALNET,
+  MAINNET,
+  DEVNET,
 }
 
 // -----------------------------
@@ -322,6 +323,8 @@ export enum PROTOCOL_STEPS_ID {
   SUBGRAPH_MAPPINGS = 'SUBGRAPH_MAPPINGS',
   PYTH_CONNECT = 'PYTH_CONNECT',
   PYTH_EXCHANGE = 'PYTH_EXCHANGE',
+  PYTH_LIQUIDATION_BOT = 'PYTH_LIQUIDATION_BOT',
+  PYTH_AMM = 'PYTH_AMM',
 }
 
 export type AlertT = 'success' | 'info' | 'warning' | 'error' | undefined;

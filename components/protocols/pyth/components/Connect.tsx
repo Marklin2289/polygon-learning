@@ -5,20 +5,28 @@ import {useEffect, useState} from 'react';
 import Confetti from 'react-confetti';
 import {Cluster, clusterApiUrl, Connection} from '@solana/web3.js';
 import {PythConnection, getPythProgramKeyForCluster} from '@pythnetwork/client';
-import {DollarCircleFilled} from '@ant-design/icons';
+import {pythMarketExplorer} from '../lib/index';
+import {
+  DollarCircleFilled,
+  AimOutlined,
+  CalculatorFilled,
+} from '@ant-design/icons';
+import {PYTH_NETWORKS} from 'types/index';
 
-const {Text} = Typography;
+const {Title} = Typography;
 
-const SOLANA_CLUSTER_NAME: Cluster = 'devnet';
-const connection = new Connection(clusterApiUrl(SOLANA_CLUSTER_NAME));
-const pythPublicKey = getPythProgramKeyForCluster(SOLANA_CLUSTER_NAME);
+const connection = new Connection(clusterApiUrl(PYTH_NETWORKS.DEVNET));
+const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
 const pythConnection = new PythConnection(connection, pythPublicKey);
 
 const Connect = () => {
   const {state, dispatch} = useGlobalState();
+  const [fetching, setFetching] = useState<boolean>(false);
 
   const [price, setPrice] = useState<number | undefined>(undefined);
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
+  const [confidence, setConfidence] = useState<number | undefined>(undefined);
+  const [exponent, setExponent] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (price) {
@@ -39,23 +47,29 @@ const Connect = () => {
         console.log(
           `${product.symbol}: $${price.price} \xB1$${price.confidence}`,
         );
+        console.log(price);
+        console.log(product);
         setPrice(price.price);
         setSymbol('Crypto.SOL/USD');
+        setConfidence(price.confidence);
+        setExponent(price.exponent);
       } else if (product.symbol === 'Crypto.SOL/USD' && !price.price) {
         console.log(`${product.symbol}: price currently unavailable`);
         setPrice(0);
         setSymbol('Crypto.SOL/USD');
+        setConfidence(0);
+        setExponent(0);
       }
     });
 
     if (!checked) {
-      message.info('Stopping feed!');
-      console.log('Stopping Pyth price feed...');
+      message.info('Stopping Pyth price feed!');
       pythConnection.stop();
+      setFetching(false);
     } else {
-      message.info('Starting feed!');
-      console.log('Starting Pyth price feed...');
+      message.info('Starting Pyth price feed!');
       pythConnection.start();
+      setFetching(true);
     }
   };
 
@@ -64,7 +78,18 @@ const Connect = () => {
       <Space direction="vertical" size="large">
         <Card
           size="small"
-          title={symbol}
+          title={
+            <Title level={3}>
+              <a
+                href={pythMarketExplorer(
+                  PYTH_NETWORKS.DEVNET,
+                  symbol as string,
+                )}
+              >
+                {symbol}
+              </a>{' '}
+            </Title>
+          }
           style={{width: 400}}
           extra={
             <Switch
@@ -75,14 +100,19 @@ const Connect = () => {
           }
         >
           {' '}
-          {price && (
-            <Confetti
-              numberOfPieces={500}
-              tweenDuration={1000}
-              gravity={0.05}
-            />
+          {price && fetching && (
+            <>
+              <Confetti
+                numberOfPieces={500}
+                tweenDuration={1000}
+                gravity={0.05}
+                recycle={false}
+              />
+            </>
           )}{' '}
           <Statistic value={price} prefix={<DollarCircleFilled />} />{' '}
+          <Statistic value={confidence} prefix={<AimOutlined />} />{' '}
+          <Statistic value={exponent} prefix={<CalculatorFilled />} />{' '}
         </Card>
         <Space direction="horizontal" size="large"></Space>
       </Space>
