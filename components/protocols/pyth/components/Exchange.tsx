@@ -49,7 +49,7 @@ const signalListener = new EventEmitter();
 
 const Exchange = () => {
   const {state, dispatch} = useGlobalState();
-  const {wallet: _wallet, provider} = useProviderAndWallet();
+  // const {wallet: _wallet, provider} = useProviderAndWallet();
 
   // Fake wallet for testing.
   const [wallet, setWallet] = useState<FakeWallet>({
@@ -148,11 +148,12 @@ const Exchange = () => {
           `${product.symbol}: $${price.price} \xB1$${price.confidence}`,
         );
         setPrice(price.price);
+        console.log(price, price.twac, new Date(Number(price.lastSlot)));
 
         const newData: {
           price: number;
           priceConfidenceRange: number[];
-          ts: bigint;
+          ts: number;
           sma: undefined | number;
           ema: undefined | number;
           trend: undefined | boolean;
@@ -162,7 +163,7 @@ const Exchange = () => {
             price?.price! - price?.confidence!,
             price?.price! + price?.confidence!,
           ],
-          ts: price.lastSlot,
+          ts: +new Date(),
           sma: undefined,
           ema: undefined,
           trend: undefined,
