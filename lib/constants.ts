@@ -335,6 +335,10 @@ export const CHAINS_CONFIG: ChainsType = {
         skippable: true,
       },
       {
+        id: PROTOCOL_STEPS_ID.PYTH_EXCHANGE,
+        title: 'Exchange on Solana',
+      },
+      {
         id: PROTOCOL_STEPS_ID.FINAL,
         title: '🎓 Pathway complete!',
         isOneColumn: true,

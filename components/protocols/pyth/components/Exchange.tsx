@@ -13,7 +13,7 @@ import {
 import {useGlobalState} from 'context';
 import {SyncOutlined} from '@ant-design/icons';
 import {useEffect, useState} from 'react';
-import {Cluster, clusterApiUrl, Connection, Keypair} from '@solana/web3.js';
+import {clusterApiUrl, Connection} from '@solana/web3.js';
 import {PythConnection, getPythProgramKeyForCluster} from '@pythnetwork/client';
 import {DollarCircleFilled} from '@ant-design/icons';
 import {Chart} from './Chart';
@@ -49,7 +49,7 @@ const signalListener = new EventEmitter();
 
 const Exchange = () => {
   const {state, dispatch} = useGlobalState();
-  // const wallet = useWallet();
+  // const {wallet: _wallet, provider} = useProviderAndWallet();
 
   // Fake wallet for testing.
   const [wallet, setWallet] = useState<FakeWallet>({
@@ -152,7 +152,7 @@ const Exchange = () => {
         const newData: {
           price: number;
           priceConfidenceRange: number[];
-          ts: bigint;
+          ts: number;
           sma: undefined | number;
           ema: undefined | number;
           trend: undefined | boolean;
@@ -162,7 +162,7 @@ const Exchange = () => {
             price?.price! - price?.confidence!,
             price?.price! + price?.confidence!,
           ],
-          ts: price.lastSlot,
+          ts: +new Date(),
           sma: undefined,
           ema: undefined,
           trend: undefined,
