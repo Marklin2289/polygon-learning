@@ -18,6 +18,9 @@ const Pyth: React.FC = () => {
         accountExplorer={accountExplorer(network)}
       />
       {stepId === PROTOCOL_STEPS_ID.PYTH_CONNECT && <Steps.Connect />}
+      {stepId === PROTOCOL_STEPS_ID.PYTH_SOLANA_WALLET && (
+        <Steps.WalletAdapter />
+      )}
       {stepId === PROTOCOL_STEPS_ID.PYTH_EXCHANGE && <Steps.Exchange />}
     </>
   );

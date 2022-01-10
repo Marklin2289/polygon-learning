@@ -47,7 +47,6 @@ const Connect = () => {
 
   const getPythData = async (checked: boolean) => {
     pythConnection.onPriceChange((product, price) => {
-      // sample output: SRM/USD: $8.68725 ±$0.0131
       if (
         product.symbol === 'Crypto.SOL/USD' &&
         price.price &&
@@ -58,14 +57,14 @@ const Connect = () => {
         );
         console.log(price);
         console.log(product);
-        setPrice(price.price);
         setSymbol('Crypto.SOL/USD');
+        setPrice(price.price);
         setConfidence(price.confidence);
         setExponent(price.exponent);
       } else if (product.symbol === 'Crypto.SOL/USD' && !price.price) {
         console.log(`${product.symbol}: price currently unavailable`);
-        setPrice(0);
         setSymbol('Crypto.SOL/USD');
+        setPrice(0);
         setConfidence(0);
         setExponent(0);
       }

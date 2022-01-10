@@ -1,18 +1,18 @@
-🥳 **Congratulations**, you have completed the Polygon Pathway! \
+🥳 **Congratulations**, you have completed the Pyth Pathway! \
 Here's a quick recap of what we covered:
 
-- 🔌 Connecting to Polygon with Metamask
-- ⁉️ Querying Polygon for specific information
-- 🏦 Funding a Polygon testnet account with the faucet
-- 💸 Transferring tokens between accounts
-- ⛓ Deploying and interacting with a Solidity smart contract
-- 🌱 Restoring access to an account with a Secret Recovery Phrase (mnemonic)
+- 🔌 Connecting to Pyth on Solana devnet
+- ⁉️ Subscribing to changes in Pyth's price data
+- 🏦 Implementing a wallet adapter
+- 📈 Visualizing market data on a chart
+- 💸 Swapping tokens on a DEX
+- ⛓ Implementing the liquidation bot
 
 # 🧐 Keep learning with these resources:
 
-- 🎲 [Using the Chainlink Oracle for randomness](https://learn.figment.io/tutorials/chainlink-vrf-on-polygon)
-- 🏗 [Deploying and debugging smart contracts](https://learn.figment.io/tutorials/deploying-and-debugging-smart-contracts-on-polygon)
-- 🧱 [Application development on Polygon](https://docs.polygon.technology/docs/develop/getting-started/)
+- 🏗 [Pyth official documentation](https://docs.pyth.network/)
+- 🧱 [Implementing Moving Averages in JavaScript](https://blog.oliverjumpertz.dev/the-moving-average-simple-and-exponential-theory-math-and-implementation-in-javascript)
+- 🚀 [Publishing data to Pyth](https://docs.pyth.network/publishers/getting-started)
 
 # 🗣 Give us your feedback
 

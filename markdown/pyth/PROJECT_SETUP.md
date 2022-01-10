@@ -18,7 +18,7 @@ To use your API key, you must create a new file named `.env.local` in the projec
 
 Find your unique API key on the [**DataHub Services Dashboard**](https://datahub.figment.io/). Click on the **Polygon** icon in the list of available protocols, then copy your key as shown below:
 
-<!-- ![](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/solana/solana-setup.gif) -->
+![](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/solana/solana-setup-00.gif?raw=true)
 
 You can then paste your unique API key into `.env.local`, as the value for the environment variable `DATAHUB_SOLANA_API_KEY`. This will authenticate you and enable you to make JSON-RPC requests to Solana via DataHub:
 

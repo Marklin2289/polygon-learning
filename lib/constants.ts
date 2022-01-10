@@ -326,17 +326,28 @@ export const CHAINS_CONFIG: ChainsType = {
       },
       {
         id: PROTOCOL_STEPS_ID.PYTH_CONNECT,
-        title: 'Query Pyth on Solana',
+        title: 'Connect to Pyth on Solana',
+        skippable: true,
+      },
+      {
+        id: PROTOCOL_STEPS_ID.PYTH_SOLANA_WALLET,
+        title: 'Wallet implementation',
+        skippable: true,
+      },
+      {
+        id: PROTOCOL_STEPS_ID.PYTH_VISUALIZE_DATA,
+        title: 'Visualize price data',
         skippable: true,
       },
       {
         id: PROTOCOL_STEPS_ID.PYTH_EXCHANGE,
-        title: 'Exchange on Solana',
+        title: 'Token swaps on a DEX',
         skippable: true,
       },
       {
-        id: PROTOCOL_STEPS_ID.PYTH_EXCHANGE,
-        title: 'Exchange on Solana',
+        id: PROTOCOL_STEPS_ID.PYTH_LIQUIDATE,
+        title: 'Liquidation Bot implementation',
+        skippable: true,
       },
       {
         id: PROTOCOL_STEPS_ID.FINAL,
