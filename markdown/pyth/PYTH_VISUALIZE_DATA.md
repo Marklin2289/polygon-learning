@@ -58,3 +58,15 @@ setData((data) => {
 ```
 
 # 🌱 Bringing the Chart to life
+
+# 🪢 Mixing price feeds
+
+Using the [Rust client library](), it is possible to merge two existing products:
+
+```rust
+let btc_usd: Price = ...;
+let eth_usd: Price = ...;
+// -8 is the desired exponent for the result
+let btc_eth: PriceConf = btc_usd.get_price_in_quote(&eth_usd, -8);
+println!(BTC/ETH price: ({} +- {}) x 10^{}", price.price, price.conf, price.expo)
+```
