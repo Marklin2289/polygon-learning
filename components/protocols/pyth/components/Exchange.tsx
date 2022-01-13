@@ -9,131 +9,127 @@ import {
   InputNumber,
   Table,
   Row,
+  Input,
+  Tag,
+  notification,
 } from 'antd';
 import {useGlobalState} from 'context';
 import {SyncOutlined} from '@ant-design/icons';
-import {useEffect, useState} from 'react';
-import {clusterApiUrl, Connection} from '@solana/web3.js';
+import React, {useEffect, useState} from 'react';
+import {Cluster, clusterApiUrl, Connection} from '@solana/web3.js';
 import {PythConnection, getPythProgramKeyForCluster} from '@pythnetwork/client';
 import {DollarCircleFilled} from '@ant-design/icons';
 import {Chart} from './Chart';
-import Wallet from '@project-serum/sol-wallet-adapter';
 import {EventEmitter} from 'events';
 import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
+import {
+  ORCA_DECIMAL,
+  SOL_DECIMAL,
+  USDC_DECIMAL,
+  useExtendedWallet,
+} from '@figment-pyth/lib/wallet';
+import _ from 'lodash';
+import * as Rx from 'rxjs';
 
 const connection = new Connection(clusterApiUrl(PYTH_NETWORKS.DEVNET));
 const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
 const pythConnection = new PythConnection(connection, pythPublicKey);
 
-let _wallet: Wallet | null = null;
-const useWallet = (): Wallet => {
-  if (_wallet) return _wallet;
-  _wallet = new Wallet('https://www.sollet.io', SOLANA_NETWORKS.DEVNET);
-  return _wallet;
-};
-
-interface FakeWallet {
-  sol_balance: number;
-  usdc_balance: number;
-}
-
-interface Order {
-  side: 'buy' | 'sell';
-  size: number;
-  price: number;
-  fromToken: string;
-  toToken: string;
-}
-
 const signalListener = new EventEmitter();
 
 const Exchange = () => {
   const {state, dispatch} = useGlobalState();
-  // const {wallet: _wallet, provider} = useProviderAndWallet();
+  const [cluster, setCluster] = useState<Cluster>('devnet');
 
-  // Fake wallet for testing.
-  const [wallet, setWallet] = useState<FakeWallet>({
-    sol_balance: 100,
-    usdc_balance: 10000,
-  });
+  const [useMock, setUseMock] = useState(true);
+  const [price, setPrice] = useState<number | undefined>(undefined);
+  const {setSecretKey, keyPair, balance, addOrder, orderBook, resetWallet} =
+    useExtendedWallet(useMock, cluster, price);
+
+  // amount of Ema to buy/sell signal.
+  const [yieldExpectation, setYield] = useState<number>(0.001);
+  const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
+  const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
+  const [symbol, setSymbol] = useState<string | undefined>(undefined);
+
   // state for tracking user worth with current Market Price.
   const [worth, setWorth] = useState({initial: 0, current: 0});
 
+  useEffect(() => {
+    if (cluster === SOLANA_NETWORKS.MAINNET) {
+      notification.warn({
+        message: 'MAINNET ',
+        description: 'TRANSACTIONS are real',
+      });
+    }
+  }, [cluster]);
+
   // Reset the wallet to the initial state.
-  const resetWallet = (sol_amount = 10) => {
-    if (!price) return;
-    setWallet({
-      sol_balance: sol_amount,
-      usdc_balance: sol_amount * price,
-    });
-    const worth = sol_amount * price * 2;
-    setWorth({initial: worth, current: worth});
-  };
-  // amount of Ema to buy/sell signal.
-  const [yieldExpectation, setYield] = useState<number>(0.001);
-  const [orderSize, setOrderSize] = useState<number>(20); // USDC
-  const [price, setPrice] = useState<number | undefined>(undefined);
-  const [symbol, setSymbol] = useState<string | undefined>(undefined);
-  const [orderBook, setOrderbook] = useState<Order[]>([]);
 
   useEffect(() => {
     if (price) {
       dispatch({
         type: 'SetIsCompleted',
       });
+      // Set ordersize Amount in Sol respect to USDC.
+      setOrderSizeSOL(orderSizeUSDC / price!);
     }
+
     // update the current worth each price update.
-    const currentWorth = wallet?.sol_balance * price! + wallet.usdc_balance;
+    const currentWorth = balance?.sol_balance * price! + balance.usdc_balance;
     setWorth({...worth, current: currentWorth});
-  }, [price, setPrice]);
+  }, [price, orderSizeUSDC, setPrice]);
 
   useEffect(() => {
     signalListener.once('*', () => {
-      resetWallet();
+      // resetWallet();
     });
-    const buyHandler = signalListener.on('buy', (price: number) => {
-      if (wallet.usdc_balance <= orderSize) return; // not enough balance
-      setOrderbook((_orderBook) => [
-        {
-          side: 'buy',
-          size: orderSize,
-          price: price,
-          fromToken: 'usdc',
-          toToken: 'sol',
-        },
-        ..._orderBook,
-      ]);
-      const solChange = orderSize / price!;
-
-      setWallet((_wallet) => ({
-        sol_balance: _wallet.sol_balance + solChange,
-        usdc_balance: _wallet.usdc_balance - orderSize,
-      }));
-    });
-
-    const sellHandler = signalListener.on('sell', (price: number) => {
-      const orderSizeSol = orderSize / price;
-      if (wallet.sol_balance <= orderSizeSol) return; // not enough balance
-      setOrderbook((_orderBook) => [
-        {
-          side: 'sell',
-          size: orderSizeSol,
-          price: price,
-          fromToken: 'sol',
-          toToken: 'usdc',
-        },
-        ..._orderBook,
-      ]);
-
-      setWallet((_wallet) => ({
-        sol_balance: _wallet.sol_balance - orderSizeSol,
-        usdc_balance: _wallet.usdc_balance + orderSizeSol * price!,
-      }));
-    });
+    const buy = Rx.fromEvent(signalListener, 'buy').pipe(Rx.mapTo(1)); // for reduce sum function to understand the operation.
+    const sell = Rx.fromEvent(signalListener, 'sell').pipe(Rx.mapTo(-1)); /// for reduce sum function to understand the operation.
+    Rx.merge(buy, sell)
+      .pipe(
+        Rx.tap((v: any) => console.log(v)),
+        Rx.bufferTime(10000), // wait 10 second.
+        Rx.map((orders: number[]) => {
+          return orders.reduce((prev, curr) => prev + curr, 0); // sum of the orders in the buffer.
+        }),
+        Rx.filter((v) => v !== 0), // if we have equaviently orders. don't put any order.
+        Rx.map((val: number) => {
+          if (val > 0) {
+            // buy.
+            return {
+              side: 'buy',
+              size: val * orderSizeUSDC,
+              fromToken: 'usdc',
+              toToken: 'sol',
+            };
+          } else if (val <= 0) {
+            return {
+              side: 'sell',
+              size: Math.abs(val) * orderSizeSOL,
+              fromToken: 'sol',
+              toToken: 'usdc',
+            };
+          }
+        }),
+      )
+      .subscribe(async (v: any) => {
+        await addOrder({
+          ...v,
+          cluster,
+        });
+      });
     return () => {
       signalListener.removeAllListeners();
     };
-  }, [yieldExpectation, orderSize, wallet]);
+  }, [
+    yieldExpectation,
+    orderSizeUSDC,
+    orderSizeSOL,
+    useMock,
+    cluster,
+    keyPair,
+  ]);
 
   const [data, setData] = useState<any[]>([]);
   const getPythData = async (checked: boolean) => {
@@ -192,11 +188,18 @@ const Exchange = () => {
               (newData.price - previousEma) * smoothingFactor + previousEma;
             newData.ema = currentEma;
 
+            /**
+             * trend of the price respect to preview ema.
+             * if the price is higher than the ema, it is a positive trend.
+             * if the price is lower than the ema, it is a negative trend.
+             * prev 10 ema trend:
+             * curr 11 ema  this will yield as trend to be % 110 up which is BUY signal.
+             */
             const trend = newData.ema / data[data.length - 1].ema;
             if (trend * 100 > 100 + yieldExpectation) {
-              signalListener.emit('buy', newData.price);
+              signalListener.emit('buy');
             } else if (trend * 100 < 100 - yieldExpectation) {
-              signalListener.emit('sell', newData.price);
+              signalListener.emit('sell');
             }
           }
           return [...data, newData];
@@ -217,6 +220,7 @@ const Exchange = () => {
       pythConnection.start();
     }
   };
+  console.log(orderBook);
   return (
     <Col>
       <Space direction="vertical" size="large">
@@ -242,8 +246,8 @@ const Exchange = () => {
               prefix="%"
             />
             <InputNumber
-              value={orderSize}
-              onChange={(e) => setOrderSize(e)}
+              value={orderSizeUSDC}
+              onChange={(e) => setOrderSizeUSDC(e)}
               prefix="USDC"
             />
           </Card>
@@ -251,29 +255,73 @@ const Exchange = () => {
         <Space direction="horizontal" size="large">
           <Card
             title="wallet"
-            extra={<Button onClick={() => resetWallet()}>Reset Wallet</Button>}
+            extra={
+              <>
+                <Switch
+                  checked={useMock}
+                  onChange={(val) => setUseMock(val)}
+                  checkedChildren={'Mock'}
+                  unCheckedChildren={'Real'}
+                />
+                {!useMock ? (
+                  <Switch
+                    checked={cluster === 'mainnet-beta'}
+                    onChange={(val) =>
+                      setCluster(val ? 'mainnet-beta' : 'devnet')
+                    }
+                    checkedChildren={'Mainnet'}
+                    unCheckedChildren={'Devnet'}
+                  />
+                ) : (
+                  <Button onClick={() => resetWallet()} disabled={!useMock}>
+                    Reset Wallet
+                  </Button>
+                )}
+              </>
+            }
           >
+            {!useMock ? (
+              <>
+                <Row>
+                  <label htmlFor="secretKey">Wallet Public</label>
+                  {keyPair?.publicKey && keyPair.publicKey.toString()}
+                </Row>
+                <Row>
+                  <label htmlFor="secretKey">Wallet Secretkey</label>
+                  <Input
+                    id="secretKey"
+                    type="password"
+                    onChange={(e) => setSecretKey(e.target.value)}
+                  />
+                </Row>
+              </>
+            ) : null}
             <Row>
               <Col span={12}>
                 <Statistic
-                  value={wallet?.sol_balance}
-                  precision={6}
+                  value={balance?.sol_balance / SOL_DECIMAL}
                   title={'SOL'}
                 />
               </Col>
-
               <Col span={12}>
                 <Statistic
-                  value={wallet?.usdc_balance}
-                  precision={6}
+                  value={balance?.usdc_balance / USDC_DECIMAL}
                   title={'USDC'}
+                />
+              </Col>
+              <Col span={12}>
+                <Statistic
+                  value={balance?.orca_balance / ORCA_DECIMAL}
+                  title={'ORCA'}
                 />
               </Col>
 
               <Col span={12}>
                 <Statistic
-                  value={wallet?.sol_balance * price! + wallet.usdc_balance}
-                  precision={6}
+                  value={
+                    (balance?.sol_balance / SOL_DECIMAL) * price! +
+                    balance.usdc_balance / USDC_DECIMAL
+                  }
                   title={'TOTAL WORTH'}
                 />
               </Col>
@@ -282,13 +330,38 @@ const Exchange = () => {
                 <Statistic
                   value={(worth.initial / worth.current) * 100 - 100}
                   prefix={'%'}
-                  precision={6}
                   title={'Change'}
                 />
               </Col>
             </Row>
           </Card>
         </Space>
+        <Card>
+          <Button
+            onClick={async () =>
+              await addOrder({
+                side: 'buy',
+                size: (balance.usdc_balance * 0.01) / USDC_DECIMAL,
+                fromToken: 'USDC',
+                toToken: 'SOL',
+              })
+            }
+          >
+            buy
+          </Button>
+          <Button
+            onClick={async () =>
+              await addOrder({
+                side: 'sell',
+                size: (balance.sol_balance * 0.5) / SOL_DECIMAL,
+                fromToken: 'SOL',
+                toToken: 'USDC',
+              })
+            }
+          >
+            sell
+          </Button>
+        </Card>
         <Card>
           <Chart data={data} />
         </Card>
@@ -298,29 +371,64 @@ const Exchange = () => {
             dataSource={orderBook}
             columns={[
               {
+                title: 'Transactions',
+                dataIndex: 'txIds',
+                key: 'txIds',
+                render: (txIds, record) => {
+                  return (
+                    <>
+                      {txIds.map((txId: string) => (
+                        <a
+                          href={`https://solscan.io/tx/${txId}?cluster=${record.cluster}`}
+                          key={txId}
+                          target={'_blank'}
+                          rel="noreferrer"
+                        >
+                          {txId.substring(-1, 5)}
+                        </a>
+                      ))}
+                    </>
+                  );
+                },
+              },
+              {
                 title: 'Side',
                 dataIndex: 'side',
                 key: 'side',
               },
               {
-                title: 'Price',
-                dataIndex: 'price',
-                key: 'price',
+                title: 'out Amount',
+                dataIndex: 'outAmount',
+                key: 'outAmount',
+                render: (val, order) => {
+                  if (order.side === 'buy') {
+                    return <Tag color="red">{val / SOL_DECIMAL}</Tag>;
+                  } else {
+                    return <Tag color="green">{val / USDC_DECIMAL}</Tag>;
+                  }
+                },
               },
               {
-                title: 'Size',
-                dataIndex: 'size',
-                key: 'size',
-              },
-              {
-                title: 'From',
-                dataIndex: 'fromToken',
-                key: 'fromToken',
-              },
-              {
-                title: 'To',
+                title: 'Out Token',
                 dataIndex: 'toToken',
                 key: 'toToken',
+              },
+              {
+                title: 'in Amount',
+                dataIndex: 'inAmount',
+                key: 'inAmount',
+                render: (val, order) => {
+                  if (order.side === 'buy') {
+                    return <Tag color="red">{val / USDC_DECIMAL}</Tag>;
+                  } else {
+                    return <Tag color="green">{val / SOL_DECIMAL}</Tag>;
+                  }
+                },
+              },
+              {
+                title: 'In Token',
+                dataIndex: 'fromToken',
+                key: 'fromToken',
               },
             ]}
           ></Table>
