@@ -1,3 +1,7 @@
+{% hint style="tip" %}
+We encourage you to have completed both the [Solana 101 pathway](https://learn.figment.io/protocols/solana) and [Build a Solana Wallet](https://learn.figment.io/pathways/solana-wallet) before continuing. A working knowledge of [React hooks](https://reactjs.org/docs/hooks-intro.html) and [TypeScript/JavaScript](https://www.typescriptlang.org/) is also recommended.
+{% endhint %}
+
 # 🧐 What is Pyth, anyway?
 
 [Pyth](https://pyth.network) is a protocol which allows publishers to include their price data for various asset pairs or _products_ on the [Solana](https://solana.com) blockchain. There are two concerned parties interacting with the Pyth protocol:
@@ -10,18 +14,22 @@ It is possible for consumers to interact with this data both on and off-chain, d
 Pyth uses three types of account on Solana:
 
 1. **Product** accounts store the metadata of a product such as its symbol and asset type.
-2. **Price** accounts store the current price information of a product, including the **confidence interval**.
+2. **Price** accounts store the current price information of a product, including the symbol and **confidence interval**.
 3. **Mapping** accounts maintain a linked list of other accounts - this allows applications to easily enumerate the full list of products served by Pyth.
 
----
+The goal of Pyth's aggregation algorithm (say _that_ five times fast!) is to combine the prices reported by publishers, giving more weight to prices with a tighter confidence interval.
+This helps consumers to access more accurate price data, with less worry about a single publisher or even a small number of publishers moving the aggregate price by themselves.
+Confidence weighting is necessary because publishers have different degrees of precision in their ability to observe a product - another factor is that exchanges with more liquidity have tighter spreads than those with less liquidity.
+
+Consider this graphic:
+
+![confidence interval graphic](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/confidence_interval.png)
 
 When dealing with valuable assets, it is important to be aware of price movements so that you can plan and react accordingly. One of the properties of markets is that there are always fluctuations in asset prices based on supply and demand. Developers can confidently use the high quality, realtime data supplied by Pyth to inform their applications.
 
-The purpose of this pathway is to explain how to use Pyth and give you hands-on experience by incorporating price data into something useful. Together, we are going to build a _liquidation bot_ which will strengthen your understanding of how to visualize the market fluctuations on a chart and perform swaps on a Decentralized Exchange. We're going to start by connecting to Pyth and subscribing to the price data on the Solana blockchain using Pyth's own client library. It's a convenient way to stay current with the on-chain price data.
+The purpose of this Pathway is to explain how to use Pyth and give you hands-on experience by incorporating price data into something useful. Together, we are going to build a simple _liquidation bot_ which will strengthen your understanding of how to visualize the market fluctuations on a chart and perform swaps on a Decentralized Exchange.
 
-{% hint style="tip" %}
-We encourage you to have completed both the [Solana 101 pathway](https://learn.figment.io/protocols/solana) and [Build a Solana Wallet](https://learn.figment.io/pathways/solana-wallet) before continuing. A working knowledge of React hooks and TypeScript/JavaScript is strongly recommended for this pathway.
-{% endhint %}
+We're going to start by connecting to Pyth and subscribing to the price data on the Solana blockchain using Pyth's own client library. It's a convenient way to stay current with the on-chain price data. This will be the first step in understanding how to leverage Pyth's data.
 
 ---
 
@@ -35,7 +43,7 @@ As you can probably tell, such a high frequency of updates will require us to be
 
 # 🤑 Aggregate price
 
-Aggregate means "formed or calculated by the combination of many separate units". When we refer to an "aggregate price", we mean that the price reported by Pyth is a combination of multiple data points, not just a single source of information. This is a good thing for consumers & developers, as it provides a clear opportunity to avoid the pitfall of acting on incorrect data.
+Aggregate means "formed or calculated by the combination of many separate units". When we refer to an "aggregate price" or "aggregate confidence interval" we mean that the information reported by Pyth is a combination of multiple data points. This is a good thing for consumers & developers to be aware of, as it provides a clear opportunity to avoid the pitfall of acting on incorrect data. Don't just rely on the aggregate price as a true price when performing financial calculations, take the confidence interval into account!
 
 ---
 
@@ -45,12 +53,15 @@ Pyth publishers must supply a confidence interval because in real markets, _ther
 
 A confidence **interval** is a range of values with an upper bound and a lower bound, computed at a particular confidence **level**.
 
-Publishers who submit their price data to Pyth do not all use the same methods to determine their confidence in a given price. Because of the potential for a small number of publishers to influence the reported price of an asset, it is therefore important to use an _aggregate_ price. The confidence interval published on Pyth is also an aggregated value, based on the confidence intervals being reported by Publishers. It is in the best interests of Publishers to provide high quality data, a confidence interval which is too low can lead to problems for consumers. Publishers do not need to agree with eachother, there may be good reasons for a high confidence interval.
+Publishers who submit their price data to Pyth do not all use the same methods to determine their confidence in a given price. Because of the potential for a small number of publishers to influence the reported price of an asset, it is therefore important to use an _aggregate_ price. The confidence interval published on Pyth is also an aggregated value, based on the confidence being reported by Publishers. It is best practice for Publishers to provide high quality data, a confidence interval which is too low can lead to problems for consumers. \
+Publishers do not need to agree with eachother, there may be good reasons for a high confidence interval.
 Pyth calculates the price and confidence intervals for all products on a constant basis - Any Publisher behind by 25 slots is considered inactive and their prices are not included in the aggregate until they can catch up, which prevents stale data from being served.
 
-"When consuming Pyth prices, we recommend using the confidence interval to protect your users from these unusual market conditions. The simplest way to do so is to use Pyth's confidence interval to compute a range in which the true price (probably) lies. You obtain this range by adding and subtracting a multiple of the confidence interval to the Pyth price; the bigger the multiple, the more likely the price lies within that range.
-
-We recommend considering a multiple of 3, which gives you a 99.7% probability that the true price is within the range (assuming normal distribution estimates are correct). Then, select the most conservative price within that range for every action. In other words, your protocol should _minimize state changes during times of large price uncertainty_." - Pyth [Best Practices](https://docs.pyth.network/consumers/best-practices)
+{% hint style="tip" %}
+"When consuming Pyth prices, we recommend using the confidence interval to protect your users from these unusual market conditions. The simplest way to do so is to use Pyth's confidence interval to compute a range in which the true price (probably) lies. You obtain this range by adding and subtracting a multiple of the confidence interval to the Pyth price; the bigger the multiple, the more likely the price lies within that range. \
+We recommend considering a multiple of 3, which gives you a 99.7% probability that the true price is within the range (assuming normal distribution estimates are correct). Then, select the most conservative price within that range for every action. \
+In other words, your protocol should _minimize state changes during times of large price uncertainty_." - Pyth [Best Practices](https://docs.pyth.network/consumers/best-practices)
+{% endhint %}
 
 ---
 
@@ -163,7 +174,7 @@ If you are interested in seeing the breakdown of the aggregated data, it is avai
 
 # ✅ Make sure it works
 
-Once you've made the necessary changes to `components/pyth/components/Connect.tsx` and saved the file, click on the toggle switch labeled "Price feed Off" on the right side of the screen to connect to Pyth & display the current price of the SOL/USD product! Be aware that the queries are being put through a public endpoint and are therefore subject to rate and data limiting - If you leave this price feed running for a while, you will run out of requests and the feed will stop updating. Be sure to switch it off before moving to the next step!
+Once you've made the necessary changes to `components/pyth/components/Connect.tsx` and saved the file, click on the toggle switch labeled "Price feed Off" on the right side of the screen to connect to Pyth & display the current price of the SOL/USD product! Be aware that the queries are being put through a public endpoint and are therefore subject to rate and data limiting - If you leave this price feed running for a while (~30 minutes), you will run out of requests and the feed will stop updating. Remember to switch it off before moving to the next step!
 
 ---
 
@@ -171,4 +182,4 @@ Once you've made the necessary changes to `components/pyth/components/Connect.ts
 
 We established a connection to the Pyth price feed on Solana using the JavaScript Pyth client and discussed the three main ideas behind the streaming of prices: Aggregate price, confidence interval and the exponent used to convert price data from fixed-point to floating point.
 
-Take a few minutes to learn more about how Pyth's [account structure](https://docs.pyth.network/how-pyth-works/account-structure) & [price aggregation](https://docs.pyth.network/how-pyth-works/price-aggregation) work on the official documentation.
+Take a few minutes to learn more about how Pyth's [account structure](https://docs.pyth.network/how-pyth-works/account-structure) & [price aggregation](https://docs.pyth.network/how-pyth-works/price-aggregation) work by reviewing the official documentation.
