@@ -11,8 +11,20 @@ Here's a quick recap of what we covered:
 # 🧐 Keep learning with these resources:
 
 - 🏗 [Pyth official documentation](https://docs.pyth.network/)
-- 🧱 [Implementing Moving Averages in JavaScript](https://blog.oliverjumpertz.dev/the-moving-average-simple-and-exponential-theory-math-and-implementation-in-javascript)
 - 🚀 [Publishing data to Pyth](https://docs.pyth.network/publishers/getting-started)
+- 🧱 [Implementing Moving Averages in JavaScript](https://blog.oliverjumpertz.dev/the-moving-average-simple-and-exponential-theory-math-and-implementation-in-javascript)
+
+# 🪢 Mixing price feeds
+
+Using the [Rust client library](https://github.com/pyth-network/pyth-client-rs#pyth-client), it is possible to merge two existing products. There are many reasons you might want to do this, and luckily the code to accomplish it within a Solana program is rather simple using the `get_price_in_quote()` function:
+
+```rust
+let btc_usd: Price = ...;
+let eth_usd: Price = ...;
+// -8 is the desired exponent for the result
+let btc_eth: PriceConf = btc_usd.get_price_in_quote(&eth_usd, -8);
+println!(BTC/ETH price: ({} +- {}) x 10^{}", price.price, price.conf, price.expo)
+```
 
 # 🗣 Give us your feedback
 

@@ -2,28 +2,15 @@
 
 In this step, we're going to work with some additional components to display the price feed in a chart format to illustrate the confidence interval and also to perform buy/sell operations on an Automated Market Maker (AMM). The purpose of this is to generate a yield over time by taking advantage of the price movements.
 
-We will use the [recharts](https://github.com/recharts/recharts#recharts) library to display our data as a chart, and we'll also be using the [Serum wallet adapter](https://github.com/project-serum/sol-wallet-adapter#sol-wallet-adapter) and the [Raydium SDK](https://github.com/raydium-io/raydium-sdk#raydium-sdk). Serum is a Decentralized Exchange built on Solana, and Raydium is an Automated Market Maker that uses Serum's central order book. A hallmark of blockchain technology is that it is composable, which is what we will be doing here - putting the pieces together to make a new tool!
+We will use the [recharts](https://github.com/recharts/recharts#recharts) library to display our data as a chart, and we'll also be using the `OrcaSwapClient` and `JupiterSwapClient` we created before.
 
 ---
 
-# 👜 Wallets
-
 ```typescript
-// Using the Wallet class from @project-serum/sol-wallet-adapter
-let _wallet: Wallet | null = null;
-const useWallet = (): Wallet => {
-  if (_wallet) return _wallet;
-  _wallet = new Wallet('https://www.sollet.io', SOLANA_NETWORKS.DEVNET);
-  return _wallet;
-};
-
-// ...
-
-// Set up a fake wallet for testing
-const [wallet, setWallet] = useState<FakeWallet>({
-  sol_balance: 100,
-  usdc_balance: 10000,
-});
+import {Cluster, Connection, Keypair, PublicKey} from '@solana/web3.js';
+import {Jupiter, RouteInfo, TOKEN_LIST_URL} from '@jup-ag/core';
+import Decimal from 'decimal.js';
+import {getOrca, Network, OrcaPoolConfig} from '@orca-so/sdk';
 ```
 
 # 📈 Buy & Sell Orders

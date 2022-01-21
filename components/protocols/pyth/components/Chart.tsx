@@ -107,3 +107,5 @@ const CustomizedHistoricalDayAxisTick = ({x, y, fill, payload}) =>
       </text>
     </g>
   ) : null;
+
+export default Chart;

@@ -30,7 +30,7 @@ export const USDC_DECIMAL = 10 ** 6;
 export const ORCA_DECIMAL = 10 ** 6;
 
 export const useExtendedWallet = (
-  useMock = false,
+  useLive = false,
   cluster: Cluster,
   price: number = 0,
 ) => {
@@ -43,7 +43,7 @@ export const useExtendedWallet = (
       const key = Keypair.fromSecretKey(arr);
       setKeyPair(key);
     } else {
-      const temp = Keypair.generate(); // we use random keypair for mock to be able to get real market data.
+      const temp = Keypair.generate(); // The mock uses a random keypair to be able to get real market data.
       setKeyPair(temp);
     }
   }, [secretKey]);
@@ -57,7 +57,7 @@ export const useExtendedWallet = (
   const [orderBook, setOrderbook] = useState<Order[]>([]);
 
   const {data, mutate} = useSWR(
-    () => `/balance/${keyPair?.publicKey}`, // cache key base on the keypair.
+    () => `/balance/${keyPair?.publicKey}`, // Cache key base on the keypair.
     balanceFetcher(keyPair!, cluster),
     {
       refreshInterval: 5000,
@@ -65,13 +65,13 @@ export const useExtendedWallet = (
   );
 
   useEffect(() => {
-    mutate(); // refresh balance
+    mutate(); // Refresh balance
   }, [cluster]);
 
   useEffect(() => {
-    if (data && !useMock) {
+    if (data && useLive) {
       /**
-       * documentation link for _.get https://lodash.com/docs/4.17.15#get
+       * Documentation for  _.get https://lodash.com/docs/4.17.15#get
        */
       const sol_balance = _.get(data, 'data[0].result.value', 0);
       const usdc_balance = _.get(
@@ -88,15 +88,14 @@ export const useExtendedWallet = (
     }
   }, [data]);
 
-  // it works very well in Mainnet.
   /**
-   * The SDK allows developers to access over 10 Dexes with more than 6bn in liquidity, allowing developers to find the best route with a simple API call.
+   * The Jupiter SDK gives access to 10+ DEXes with more than 6bn in liquidity, allowing developers to find the best swap route with a simple API call.
    */
   const [jupiterSwapClient, setJupiterSwapClient] =
     useState<JupiterSwapClient | null>(null);
 
   /**
-   *  since jup.ag not supporting devnet yet, we use orca.
+   *  Since jup.ag does not support devnet yet, we'll use Orca for devnet swaps.
    */
   const [orcaSwapClient, setOrcaSwapClient] = useState<OrcaSwapClient | null>(
     null,
@@ -127,7 +126,8 @@ export const useExtendedWallet = (
   const getJupiterSwapClient = async () => {
     if (jupiterSwapClient) return jupiterSwapClient;
     const _jupiterSwapClient = await JupiterSwapClient.initialize(
-      new Connection('https://solana-api.projectserum.com/', 'confirmed'), // why not use clusterApiUrl('mainnet') over projectserum? because mainnet has rate limit at the moment.
+      // Why not use clusterApiUrl('mainnet') over projectserum? Because mainnet public endpoints have rate limits at the moment.
+      new Connection('https://solana-api.projectserum.com/', 'confirmed'),
       SOLANA_NETWORKS.MAINNET,
       keyPair,
       SOL_MINT_ADDRESS,
@@ -154,16 +154,16 @@ export const useExtendedWallet = (
       inputAmount: order.size,
       slippage: 1,
     });
-    console.log('routes', routes);
+    console.log('routes:', routes);
     const bestRoute = routes?.routesInfos[0];
-    console.log('bestRoute', bestRoute);
+    console.log('bestRoute:', bestRoute);
     const result = {
       inAmount: bestRoute?.inAmount || 0,
       outAmount: bestRoute?.outAmount || 0,
       txIds: ['mockTransaction_XXXXX'],
     };
 
-    // fake the transaction change.
+    // Balance change for the mock wallet. This is not an actual transaction.
     setBalance((previousBalance) => ({
       ...previousBalance,
       usdc_balance:
@@ -181,13 +181,13 @@ export const useExtendedWallet = (
 
   const addOrder = useCallback(
     async (order: Order) => {
-      console.log('addOrder', useMock, order, cluster);
+      console.log('addOrder', useLive, order, cluster);
       let result: SwapResult;
-      if (useMock) {
+      if (!useLive) {
         result = await addMockOrder(order);
-      } else if (!useMock) {
+      } else if (useLive) {
         if (cluster === 'devnet') {
-          console.log('HERE', cluster, useMock);
+          console.log('HERE', cluster, useLive);
           const _orcaClient = await getOrcaSwapClient();
           if (order.side === 'buy') {
             result = await _orcaClient?.buy(order.size)!;
@@ -214,12 +214,12 @@ export const useExtendedWallet = (
         setOrderbook((_orderBook) => [extendedOrder, ..._orderBook]);
       }
     },
-    [useMock, cluster, keyPair],
+    [useLive, cluster, keyPair],
   );
 
   const resetWallet = (params = {sol_balance: 10, usdc_balance: 1400}) => {
-    if (!useMock) {
-      setSecretKey(undefined);
+    if (useLive) {
+      // setSecretKey(undefined);
     } else {
       setBalance({
         sol_balance: params.sol_balance * SOL_DECIMAL,
@@ -254,14 +254,14 @@ const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
       {
         jsonrpc: '2.0',
         id: 1,
-        method: 'getTokenAccountsByOwner', //https://docs.solana.com/developing/clients/jsonrpc-api#gettokenaccountsbyowner
+        method: 'getTokenAccountsByOwner', // https://docs.solana.com/developing/clients/jsonrpc-api#gettokenaccountsbyowner
         params: [
           keyPair?.publicKey.toBase58(),
           {
             mint:
               cluster === 'mainnet-beta'
                 ? USDC_MINT_ADDRESS
-                : 'EmXq3Ni9gfudTiyNKzzYvpnQqnJEMRw2ttnVXoJXjLo1', // orca devnet pool USDC equivelent token mint address.
+                : 'EmXq3Ni9gfudTiyNKzzYvpnQqnJEMRw2ttnVXoJXjLo1', // Orca devnet pool USDC equivalent token mint address.
           },
           {
             encoding: 'jsonParsed',
@@ -271,11 +271,11 @@ const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
       {
         jsonrpc: '2.0',
         id: 2,
-        method: 'getTokenAccountsByOwner', //https://docs.solana.com/developing/clients/jsonrpc-api#gettokenaccountsbyowner
+        method: 'getTokenAccountsByOwner', // https://docs.solana.com/developing/clients/jsonrpc-api#gettokenaccountsbyowner
         params: [
           keyPair?.publicKey.toBase58(),
           {
-            mint: ORCA_MINT_ADDRESS, // just because it a midway swap token in devnet.
+            mint: ORCA_MINT_ADDRESS, // Required as a midway swap token for devnet swaps using Orca.
           },
           {
             encoding: 'jsonParsed',
