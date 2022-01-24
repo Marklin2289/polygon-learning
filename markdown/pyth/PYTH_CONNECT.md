@@ -1,11 +1,6 @@
-{% hint style="tip" %}
-We recommend completing both the [Solana 101 pathway](https://learn.figment.io/protocols/solana) and [Build a Solana Wallet](https://learn.figment.io/pathways/solana-wallet) before continuing. \
-A working knowledge of [React hooks](https://reactjs.org/docs/hooks-intro.html) and [TypeScript/JavaScript](https://www.typescriptlang.org/) is also recommended.
-{% endhint %}
-
 # 🤨 What are we building, here?
 
-Using price data from Pyth, we are going to build a minimum viable product (MVP) which supports automating the task of swapping between SOL and USDC tokens using a decentralized exchange. The goal is to be able to buy when the price is low and sell when the price is high, to build a yield over time. There are several ways of referring to this behavior, but for the purposes of this Pathway we will refer to the MVP as a "liquidation bot".
+Using price data from Pyth, we are going to build a minimum viable product (MVP) which supports automating the task of swapping between SOL and USDC tokens using a decentralized exchange. The goal is to be able to buy when the price is low and sell when the price is high, to generate a yield over time. There are several ways of referring to this behavior, but for the purposes of this Pathway we will refer to the MVP as a "liquidation bot".
 
 To complete this project, we must implement the following:
 
@@ -65,9 +60,9 @@ Pyth publishers must supply a confidence interval because in real markets, _ther
 
 A confidence **interval** is a range of values with an upper bound and a lower bound, computed at a particular confidence **level**.
 
-Publishers who submit their price data to Pyth do not all use the same methods to determine their confidence in a given price. Because of the potential for a small number of publishers to influence the reported price of an asset, it is therefore important to use an _aggregate_ price. The confidence interval published on Pyth is also an aggregated value, based on the confidence being reported by Publishers. It is best practice for Publishers to provide high quality data, a confidence interval which is too low can lead to problems for consumers. \
-Publishers do not need to agree with eachother, there may be good reasons for a high confidence interval.
-Pyth calculates the price and confidence intervals for all products on a constant basis - Any Publisher behind by 25 slots is considered inactive and their prices are not included in the aggregate until they can catch up, which prevents stale data from being served.
+Publishers who submit their price data to Pyth do not all use the same methods to determine their confidence in a given price. Because of the potential for a small number of publishers to influence the reported price of an asset, it is therefore important to use an _aggregate_ price. The confidence interval published on Pyth is also an aggregated value, based on the confidence being reported by Publishers. It is best practice for Publishers to provide high quality data, a confidence interval which is too low can lead to problems for consumers.
+
+Pyth calculates the price and confidence intervals for all products on a constant basis - Any Publisher behind by 25 slots (approximately 10 seconds) is considered inactive and their prices are not included in the aggregate until they can catch up, which prevents stale data from being served.
 
 {% hint style="tip" %}
 "When consuming Pyth prices, we recommend using the confidence interval to protect your users from these unusual market conditions. The simplest way to do so is to use Pyth's confidence interval to compute a range in which the true price (probably) lies. You obtain this range by adding and subtracting a multiple of the confidence interval to the Pyth price; the bigger the multiple, the more likely the price lies within that range. \
@@ -115,8 +110,9 @@ const Connect = () => {
 //...
 ```
 
-**Need some help?** Check out these hints 👇
+**Need some help?** Check out these links & hints 👇
 
+- [What are callback functions](https://www.freecodecamp.org/news/javascript-callback-functions-what-are-callbacks-in-js-and-how-to-use-them/) in JavaScript?
 - To connect to Pyth, use the `PythConnection` class from `@pythnetwork/client` - You'll need to supply a JSON-RPC connection and a Pyth program public key. Seasoned developers may wish to [dive into the code](https://github.com/pyth-network/pyth-client-js/blob/3de72323598131d6d14a9dc9f48f5f225b5fbfd2/src/PythConnection.ts#L29) to see what it's doing.
 - There is a function for mapping Solana clusters to the public key of the Pyth program: `getPythProgramKeyForCluster`. \
   You'll need to supply the name of the Solana cluster you want to get Pyth data from (`mainnet-beta`, `devnet` or `testnet`).
@@ -199,4 +195,4 @@ We also discussed three key concepts involved in price data: Aggregate price, co
 
 If you'd like, take a few minutes to learn more about how Pyth's [account structure](https://docs.pyth.network/how-pyth-works/account-structure) & [price aggregation](https://docs.pyth.network/how-pyth-works/price-aggregation) work by reviewing the official documentation.
 
-If you are interested in the specifics of the Pyth protocol, check out the [Pyth whitepaper](https://s3.us-east-2.amazonaws.com/pyth.whitepaper/whitepaper.pdf), which explains how all aspects of the protocol work.
+If you are interested in the specifics, check out the [Pyth whitepaper](https://s3.us-east-2.amazonaws.com/pyth.whitepaper/whitepaper.pdf) which explains how the protocol operates.

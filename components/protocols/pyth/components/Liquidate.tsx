@@ -38,10 +38,9 @@ import * as Rx from 'rxjs';
 const connection = new Connection(clusterApiUrl(PYTH_NETWORKS.DEVNET));
 const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
 const pythConnection = new PythConnection(connection, pythPublicKey);
-
 const signalListener = new EventEmitter();
 
-const Exchange = () => {
+const Liquidate = () => {
   const {state, dispatch} = useGlobalState();
   const [cluster, setCluster] = useState<Cluster>('devnet');
 
@@ -50,20 +49,29 @@ const Exchange = () => {
   const {setSecretKey, keyPair, balance, addOrder, orderBook, resetWallet} =
     useExtendedWallet(useLive, cluster, price);
 
-  // amount of Ema to buy/sell signal.
+  // yield is the amount of EMA to trigger a buy/sell signal.
   const [yieldExpectation, setYield] = useState<number>(0.001);
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
   const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
+
+  // state for tracking user worth with current Market Price.
+  const [worth, setWorth] = useState({initial: 0, current: 0});
 
   // Shorten the public key for display purposes
   const displayAddress = `${keyPair.publicKey
     .toString()
     .slice(0, 6)}...${keyPair.publicKey.toString().slice(38, 44)}`;
 
-  // state for tracking user worth with current Market Price.
-  const [worth, setWorth] = useState({initial: 0, current: 0});
-
+  /**
+   * The useEffect below will be triggered whenever the cluster changes.
+   * It will display a sticky notification (duration: 0) for mainnet-beta,
+   * while the devnet notification will only be shown for 3 seconds.
+   * The mainnet-beta notification can be dismissed by clicking the button
+   * defined in btn.
+   *
+   *  The dependency array contains cluster.
+   */
   useEffect(() => {
     const btn = (
       <Button
@@ -93,8 +101,12 @@ const Exchange = () => {
     }
   }, [cluster]);
 
-  // Reset the wallet to the initial state.
-
+  /**
+   *  The useEffect below will set the pathway step as completed once price data is fetched.
+   *  It will also use setWorth to update the current worth on every price update.
+   *
+   *  The dependency array contains price, orderSizeUSDC and setPrice.
+   */
   useEffect(() => {
     if (price) {
       dispatch({
@@ -103,18 +115,24 @@ const Exchange = () => {
       // Set ordersize Amount in Sol respect to USDC.
       setOrderSizeSOL(orderSizeUSDC / price!);
     }
-
-    // update the current worth each price update.
     const currentWorth = balance?.sol_balance * price! + balance.usdc_balance;
     setWorth({...worth, current: currentWorth});
   }, [price, orderSizeUSDC, setPrice]);
 
+  /**
+   *  The useEffect below is responsible for handling the buy and sell signals.
+   *  It will capture signals over a 10 second period and then calculate whether to
+   *  send a buy or sell order based on the sum being positive or negative.
+   *
+   *  The dependency array contains yieldExpectation, orderSizeUSDC, orderSizeSOL,
+   *  useMock, cluster & keyPair.
+   */
   useEffect(() => {
     signalListener.once('*', () => {
       resetWallet();
     });
     const buy = Rx.fromEvent(signalListener, 'buy').pipe(Rx.mapTo(1)); // for reduce sum function to understand the operation.
-    const sell = Rx.fromEvent(signalListener, 'sell').pipe(Rx.mapTo(-1)); /// for reduce sum function to understand the operation.
+    const sell = Rx.fromEvent(signalListener, 'sell').pipe(Rx.mapTo(-1)); // for reduce sum function to understand the operation.
     Rx.merge(buy, sell)
       .pipe(
         Rx.tap((v: any) => console.log(v)),
@@ -160,10 +178,14 @@ const Exchange = () => {
     keyPair,
   ]);
 
+  /**
+   *  You will recognize the getPythData function from the first step of the pathway, with some additions.
+   *  The getPythData hook is where we are calculating our Exponential Moving Average.
+   *
+   */
   const [data, setData] = useState<any[]>([]);
   const getPythData = async (checked: boolean) => {
     pythConnection.onPriceChange((product, price) => {
-      // sample output: SRM/USD: $8.68725 ±$0.0131
       if (
         product.symbol === 'Crypto.SOL/USD' &&
         price.price &&
@@ -194,6 +216,7 @@ const Exchange = () => {
         };
         const window = 10;
         const smoothingFactor = 2 / (window + 1);
+
         /**
          * Calculate Simple moving average:
          *   https://en.wikipedia.org/wiki/Moving_average#Simple_moving_average
@@ -250,7 +273,9 @@ const Exchange = () => {
     }
   };
 
-  console.log(orderBook);
+  if (orderBook.length > 0) {
+    console.log(orderBook);
+  }
 
   return (
     <Col>
@@ -269,18 +294,6 @@ const Exchange = () => {
             }
           >
             <Statistic value={price} prefix={<DollarCircleFilled />} />{' '}
-          </Card>
-          <Card title={'Yield Expectation'} size={'small'}>
-            <InputNumber
-              value={yieldExpectation}
-              onChange={(e) => setYield(e)}
-              prefix="%"
-            />
-            <InputNumber
-              value={orderSizeUSDC}
-              onChange={(e) => setOrderSizeUSDC(e)}
-              prefix="USDC"
-            />
           </Card>
         </Space>
         <Space direction="horizontal" size="large">
@@ -402,7 +415,11 @@ const Exchange = () => {
           </Card>
         </Space>
         <Card>
+          <Chart data={data} />
+        </Card>
+        <Card>
           <Button
+            type="primary"
             onClick={async () =>
               await addOrder({
                 side: 'buy',
@@ -412,9 +429,10 @@ const Exchange = () => {
               })
             }
           >
-            buy
-          </Button>
+            (testing) USDC to SOL
+          </Button>{' '}
           <Button
+            type="primary"
             onClick={async () =>
               await addOrder({
                 side: 'sell',
@@ -424,14 +442,24 @@ const Exchange = () => {
               })
             }
           >
-            sell
+            (testing) SOL to USDC
           </Button>
-        </Card>
-        <Card>
-          <Chart data={data} />
-        </Card>
-        <Card>
-          <Statistic value={orderBook.length} title={'Number of Operations'} />
+          <Card title={'Yield Expectation'} size={'small'}>
+            <InputNumber
+              value={yieldExpectation}
+              onChange={(e) => setYield(e)}
+              prefix="%"
+            />
+            <InputNumber
+              value={orderSizeUSDC}
+              onChange={(e) => setOrderSizeUSDC(e)}
+              prefix="USDC"
+            />
+          </Card>
+          <Statistic
+            value={orderBook.length}
+            title={'Order Book Total Transactions'}
+          />
           <Table
             dataSource={orderBook}
             columns={[
@@ -503,4 +531,4 @@ const Exchange = () => {
   );
 };
 
-export default Exchange;
+export default Liquidate;

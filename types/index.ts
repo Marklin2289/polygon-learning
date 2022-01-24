@@ -131,6 +131,7 @@ export enum PYTH_NETWORKS {
   MAINNET = 'mainnet-beta',
   TESTNET = 'testnet',
   DEVNET = 'devnet',
+  LOCALNET = 'localnet',
 }
 
 export enum SOLANA_NETWORKS {

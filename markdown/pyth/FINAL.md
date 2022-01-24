@@ -14,9 +14,9 @@ Here's a quick recap of what we covered:
 - 🚀 [Publishing data to Pyth](https://docs.pyth.network/publishers/getting-started)
 - 🧱 [Implementing Moving Averages in JavaScript](https://blog.oliverjumpertz.dev/the-moving-average-simple-and-exponential-theory-math-and-implementation-in-javascript)
 
-# 🪢 Mixing price feeds
+# 🪢 Mixing price feeds in Rust
 
-Using the [Rust client library](https://github.com/pyth-network/pyth-client-rs#pyth-client), it is possible to merge two existing products. There are many reasons you might want to do this, and luckily the code to accomplish it within a Solana program is rather simple using the `get_price_in_quote()` function:
+Using the [Rust client library](https://github.com/pyth-network/pyth-client-rs#pyth-client), it is possible to merge two existing products that do not already have an associated pair. There are many reasons you might want to do this, and luckily the code to accomplish it within a Solana program is rather simple using the `get_price_in_quote()` function:
 
 ```rust
 let btc_usd: Price = ...;
@@ -29,10 +29,3 @@ println!(BTC/ETH price: ({} +- {}) x 10^{}", price.price, price.conf, price.expo
 # 🗣 Give us your feedback
 
 Please take a couple of minutes to fill out this short **[feedback form](https://docs.google.com/forms/d/1SXg3xo0I1BRN2BAS-ffDbj1P6bfwo0x48trttmJ5xKs/)**.
-
-what to do when publishers are close in reported price? - want the agCI to represent the
-what to do when publishers are spread out in reported price? 100 on one exchange, 200 on another? - want the agCI to represent the dispersion in prices
-algorighm is :
-publishers have 3 votes - at price, at CI top and at CI bottom
-25th / 75th percentile
-motivation:

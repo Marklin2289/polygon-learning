@@ -1,18 +1,4 @@
-import {
-  Col,
-  Space,
-  Switch,
-  message,
-  Statistic,
-  Card,
-  Button,
-  InputNumber,
-  Table,
-  Row,
-  Input,
-  Tag,
-  notification,
-} from 'antd';
+import {Col, Space, Switch, message, Statistic, Card, notification} from 'antd';
 import {useGlobalState} from 'context';
 import {SyncOutlined} from '@ant-design/icons';
 import React, {useEffect, useState} from 'react';
@@ -21,13 +7,8 @@ import {PythConnection, getPythProgramKeyForCluster} from '@pythnetwork/client';
 import {DollarCircleFilled} from '@ant-design/icons';
 import {Chart} from './Chart';
 import {EventEmitter} from 'events';
-import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
-import {
-  ORCA_DECIMAL,
-  SOL_DECIMAL,
-  USDC_DECIMAL,
-  useExtendedWallet,
-} from '@figment-pyth/lib/wallet';
+import {PYTH_NETWORKS} from 'types/index';
+import {useExtendedWallet} from '@figment-pyth/lib/wallet';
 import _ from 'lodash';
 import * as Rx from 'rxjs';
 
@@ -41,30 +22,19 @@ const ChartMock = () => {
   const {state, dispatch} = useGlobalState();
   const [cluster, setCluster] = useState<Cluster>('devnet');
 
-  const [useMock, setUseMock] = useState(true);
+  const [useLive, setUseLive] = useState(true);
   const [price, setPrice] = useState<number | undefined>(undefined);
   const {setSecretKey, keyPair, balance, addOrder, orderBook, resetWallet} =
-    useExtendedWallet(useMock, cluster, price);
+    useExtendedWallet(useLive, cluster, price);
 
-  // amount of Ema to buy/sell signal.
+  // Amount of EMA to buy/sell signal.
   const [yieldExpectation, setYield] = useState<number>(0.001);
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
   const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
 
-  // state for tracking user worth with current Market Price.
+  // State for tracking user worth with current Market Price.
   const [worth, setWorth] = useState({initial: 0, current: 0});
-
-  useEffect(() => {
-    if (cluster === SOLANA_NETWORKS.MAINNET) {
-      notification.warn({
-        message: 'MAINNET ',
-        description: 'TRANSACTIONS are real',
-      });
-    }
-  }, [cluster]);
-
-  // Reset the wallet to the initial state.
 
   useEffect(() => {
     if (price) {
@@ -82,43 +52,8 @@ const ChartMock = () => {
 
   useEffect(() => {
     signalListener.once('*', () => {
-      // resetWallet();
+      resetWallet();
     });
-    const buy = Rx.fromEvent(signalListener, 'buy').pipe(Rx.mapTo(1)); // for reduce sum function to understand the operation.
-    const sell = Rx.fromEvent(signalListener, 'sell').pipe(Rx.mapTo(-1)); /// for reduce sum function to understand the operation.
-    Rx.merge(buy, sell)
-      .pipe(
-        Rx.tap((v: any) => console.log(v)),
-        Rx.bufferTime(10000), // wait 10 second.
-        Rx.map((orders: number[]) => {
-          return orders.reduce((prev, curr) => prev + curr, 0); // sum of the orders in the buffer.
-        }),
-        Rx.filter((v) => v !== 0), // if we have equaviently orders. don't put any order.
-        Rx.map((val: number) => {
-          if (val > 0) {
-            // buy.
-            return {
-              side: 'buy',
-              size: val * orderSizeUSDC,
-              fromToken: 'usdc',
-              toToken: 'sol',
-            };
-          } else if (val <= 0) {
-            return {
-              side: 'sell',
-              size: Math.abs(val) * orderSizeSOL,
-              fromToken: 'sol',
-              toToken: 'usdc',
-            };
-          }
-        }),
-      )
-      .subscribe(async (v: any) => {
-        await addOrder({
-          ...v,
-          cluster,
-        });
-      });
     return () => {
       signalListener.removeAllListeners();
     };
@@ -126,7 +61,7 @@ const ChartMock = () => {
     yieldExpectation,
     orderSizeUSDC,
     orderSizeSOL,
-    useMock,
+    useLive,
     cluster,
     keyPair,
   ]);
@@ -134,7 +69,6 @@ const ChartMock = () => {
   const [data, setData] = useState<any[]>([]);
   const getPythData = async (checked: boolean) => {
     pythConnection.onPriceChange((product, price) => {
-      // sample output: SRM/USD: $8.68725 ±$0.0131
       if (
         product.symbol === 'Crypto.SOL/USD' &&
         price.price &&
@@ -163,8 +97,13 @@ const ChartMock = () => {
           ema: undefined,
           trend: undefined,
         };
+
+        /**
+         * window & smoothingFactor are used to calculate the Exponential moving average.
+         */
         const window = 10;
         const smoothingFactor = 2 / (window + 1);
+
         /**
          * Calculate Simple moving average:
          *   https://en.wikipedia.org/wiki/Moving_average#Simple_moving_average
@@ -189,11 +128,13 @@ const ChartMock = () => {
             newData.ema = currentEma;
 
             /**
-             * trend of the price respect to preview ema.
-             * if the price is higher than the ema, it is a positive trend.
-             * if the price is lower than the ema, it is a negative trend.
-             * prev 10 ema trend:
-             * curr 11 ema  this will yield as trend to be % 110 up which is BUY signal.
+             * Trend of the price with respect to preview EMA.
+             * If the price is higher than the EMA, it is a positive trend.
+             * If the price is lower than the EMA, it is a negative trend.
+             *
+             * The signalListener emits an event carrying the buy or sell signal,
+             * which we will manage with RxJS and use to populate the order book
+             * used by the liquidation bot.
              */
             const trend = newData.ema / data[data.length - 1].ema;
             if (trend * 100 > 100 + yieldExpectation) {
@@ -220,7 +161,7 @@ const ChartMock = () => {
       pythConnection.start();
     }
   };
-  console.log(orderBook);
+
   return (
     <Col>
       <Space direction="vertical" size="large">

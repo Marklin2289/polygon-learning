@@ -21,6 +21,7 @@ const Pyth: React.FC = () => {
       {stepId === PROTOCOL_STEPS_ID.PYTH_SOLANA_WALLET && <Steps.Wallet />}
       {stepId === PROTOCOL_STEPS_ID.PYTH_VISUALIZE_DATA && <Steps.ChartMock />}
       {stepId === PROTOCOL_STEPS_ID.PYTH_EXCHANGE && <Steps.Exchange />}
+      {stepId === PROTOCOL_STEPS_ID.PYTH_LIQUIDATE && <Steps.Liquidate />}
     </>
   );
 };

@@ -1,32 +1,35 @@
+{% hint style="tip" %}
+We recommend completing both the [Solana 101 pathway](https://learn.figment.io/protocols/solana) and [Build a Solana Wallet](https://learn.figment.io/pathways/solana-wallet) before continuing. A working knowledge of [React hooks](https://reactjs.org/docs/hooks-intro.html) and [TypeScript/JavaScript](https://www.typescriptlang.org/) is also recommended.
+{% endhint %}
+
 # 🦺 Important information for your safety
 
-During this Pathway, we will be providing you with an opportunity to use the mainnet-beta cluster of Solana to perform token swaps with [Jupiter](https://jup.ag), a liquidity aggregator for Solana - which means that **actual funds may be used**.
+During this Pathway, we will be providing you with an opportunity to use the Solana [mainnet-beta cluster](https://docs.solana.com/clusters#mainnet-beta) (hereafter referred to as "mainnet") to perform token swaps with [Jupiter](https://jup.ag), a liquidity aggregator for Solana - which means that **actual funds may be used**.
 
-This is **not** a requirement for completing the Pathway & we have made sure to _clearly mark the difference_ between using a wallet containing **devnet SOL** and a wallet containing **mainnet-beta SOL**. Be aware that during the Pathway, you will be asked to input the private key of a **devnet only** wallet, which we will walk you through setting up.
+This is **not** a requirement for completing the Pathway & we have made sure to _clearly mark the difference_ between using a wallet containing **devnet SOL** and a wallet containing **mainnet SOL**. Be aware that during the Pathway, you will be asked to input the private key of a **devnet only** wallet, which we will walk you through setting up.
 
-Before proceeding, it is extremely important for you to understand that **in the event you provide the private key of a mainnet-beta Solana account containing real money SOL to the wallet component in the Pathway, you are potentially risking the full amount of SOL in that account**. Figment is not responsible for your losses in such a scenario, and we have made every effort to communicate the risks involved throughout the Pathway.
+Before proceeding, it is extremely important for you to understand that **in the event you provide the private key of a Solana account containing mainnet SOL to the wallet component in the Pathway, you are potentially risking the full amount of SOL in that account**. Figment is not responsible for your losses in such a scenario, and we have made every effort to communicate the risks involved throughout the Pathway.
 
-There is a wallet component used during the pathway which has a toggle switch between "mock" and "live". When the toggle is set to "live", you will be able to provide a [Solana keypair secret key](https://solana-labs.github.io/solana-web3.js/classes/Keypair.html) in the form of a byte array. Solana keypairs can be created using the Solana CLI, or with the JavaScript API, or even by using a browser extension wallet such as [Phantom](https://phantom.app).
+There is a wallet component used during the Pathway which has a toggle switch between "mock" and "live". When the toggle is set to "live", you will be able to provide a [Solana keypair private key](https://solana-labs.github.io/solana-web3.js/classes/Keypair.html). Solana keypairs can be created using the Solana CLI, or with the JavaScript API, or even by using a browser extension wallet such as [Phantom](https://phantom.app).
 
-The most important consideration here is that in order to perform _any_ swaps on mainnet-beta using this project, you must:
+The most important consideration here is that in order to perform _any_ swaps on Solana mainnet using this project, you must:
 
-- Own a funded account on mainnet-beta containing an amount of SOL and the SPL token USDC (a United States Dollar stablecoin)
-- Switch the wallet component from "mock" to "live", which will present you with an alert warning you of the hazard of proceeding
-- Copy and paste the secret key of your funded account it into the textinput of the **live** wallet component
-
-**REMEMBER: THIS SERIES OF TUTORIALS IS FOR EDUCATIONAL PURPOSES ONLY!**
+- Own a funded account on mainnet containing an amount of SOL and the USDC SPL token (a United States Dollar stablecoin)
+- Be on Step 6, "Token swaps on a DEX" or Step 7, "Liquidation bot implementation"
+- Switch the wallet component from "mock" to "live" & also switch from devnet to mainnet, which will present you with an alert warning you of the hazard
+- Copy and paste the private key of your funded account into the textinput of the **live** wallet component
 
 ---
 
 # 🧑‍💻 Install the Pyth client
 
-Install the Typescript/Javascript library for off-chain applications, such as displaying the Pyth price on a website.
-
-Whether you're using Gitpod or a local clone of the repo, the installation procedure is the same. Run the terminal command below inside the root directory of the project (`learn-web3-dapp/`) :
+Install the TypeScript/JavaScript library for off-chain applications, such as displaying the Pyth price on a website. Whether you're using Gitpod or a local clone of the repo, the installation procedure is the same. Run the terminal command below inside the root directory of the project (`learn-web3-dapp/`) :
 
 ```text
 yarn add @pythnetwork/client
 ```
+
+This Pathway will only cover use of `@pythnetwork/client`. There are also Rust, Python and EVM based clients. Refer to the [list of available client libraries](https://docs.pyth.network/consumers/client-libraries) in the Pyth documentation for links.
 
 ---
 

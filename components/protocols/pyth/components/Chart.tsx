@@ -1,6 +1,6 @@
 import {Select} from 'antd';
 import {useEffect, useState} from 'react';
-import {Area, AreaChart, Line, Tooltip, XAxis, YAxis} from 'recharts';
+import {Area, AreaChart, Tooltip, XAxis, YAxis} from 'recharts';
 
 export const Chart: React.FC<{data: any}> = ({data}) => {
   const [domain, setDomain] = useState({dataMax: 0, dataMin: 0, price: 10});
@@ -26,7 +26,7 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
         onChange={(value) => setSelectedTimeRange(value)}
       >
         <Select.Option value={'LIVE'}>LIVE</Select.Option>
-        <Select.Option value={'1D'}>Day</Select.Option>
+        <Select.Option value={'1D'}>DAY</Select.Option>
         <Select.Option value={'1W'}>WEEK</Select.Option>
       </Select>
       <AreaChart
@@ -62,7 +62,7 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
 
         <Area dataKey="priceConfidenceRange" stroke="#8884d8" fill="#8884d8" />
         <Area dataKey="price" stroke="#000" fillOpacity={0} />
-        {/* <Area dataKey="sma" stroke="#FF0000" fillOpacity={0} /> */}
+        <Area dataKey="sma" stroke="#FF0000" fillOpacity={0} />
         <Area dataKey="ema" stroke="#00FF00" fillOpacity={0} />
       </AreaChart>
     </>
