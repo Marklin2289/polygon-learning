@@ -132,13 +132,7 @@ export const useExtendedWallet = (
     if (jupiterSwapClient) return jupiterSwapClient;
     const _jupiterSwapClient = await JupiterSwapClient.initialize(
       // Why not use clusterApiUrl('mainnet') over projectserum? Because mainnet public endpoints have rate limits at the moment.
-      // solana--mainnet--rpc.datahub.figment.io/apikey/7087b9e27d60870a58c8c9114935017d
       new Connection(SERUM_RPC_URL, 'confirmed'),
-      // new Connection(
-      //   'https://solana--mainnet--rpc.datahub.figment.io/apikey/7087b9e27d60870a58c8c9114935017d/',
-      //   'confirmed',
-      // ),
-
       SOLANA_NETWORKS.MAINNET,
       keyPair,
       SOL_MINT_ADDRESS,
@@ -253,8 +247,6 @@ export const useExtendedWallet = (
 const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
   axios({
     url: cluster === 'devnet' ? clusterApiUrl(cluster) : SERUM_RPC_URL,
-    // url: 'https://dh--solana-testnet--1.datahub.figment.io/apikey/7087b9e27d60870a58c8c9114935017d/',
-    // url: 'https://solana--devnet.datahub.figment.io/apikey/7087b9e27d60870a58c8c9114935017d/',
     method: 'post',
     headers: {'Content-Type': 'application/json'},
     data: [
