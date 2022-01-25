@@ -1,3 +1,4 @@
+import {SOL_DECIMAL, USDC_DECIMAL} from './wallet';
 import {Cluster, Connection, Keypair, PublicKey} from '@solana/web3.js';
 import {Jupiter, RouteInfo, TOKEN_LIST_URL} from '@jup-ag/core';
 import Decimal from 'decimal.js';
@@ -228,8 +229,8 @@ export class OrcaSwapClient {
     const swapPayload = await orcaSolPool.swap(
       this.keypair,
       orcaToken,
-      solAmount,
       orcaAmount,
+      solAmount,
     );
 
     const swapTxId = await swapPayload.execute();
@@ -237,8 +238,8 @@ export class OrcaSwapClient {
 
     return {
       txIds: [swapTxId, swapOrcaTxId],
-      inAmount: solAmount.toNumber(),
-      outAmount: usdcAmount.toNumber(),
+      inAmount: usdcAmount.toNumber() * USDC_DECIMAL,
+      outAmount: solAmount.toNumber() * SOL_DECIMAL,
     };
   }
   /**
@@ -250,7 +251,7 @@ export class OrcaSwapClient {
    */
   async sell(size: number): Promise<SwapResult> {
     const orca = getOrca(this.connection, Network.DEVNET);
-    const orcaSolPool = orca.getPool(OrcaPoolConfig.SOL_USDC);
+    const orcaSolPool = orca.getPool(OrcaPoolConfig.ORCA_SOL);
     const solToken = orcaSolPool.getTokenA();
     const solAmount = new Decimal(size);
     const quote = await orcaSolPool.getQuote(solToken, solAmount);
@@ -258,12 +259,6 @@ export class OrcaSwapClient {
     console.log(
       `Swap ${solAmount.toString()} SOL for at least ${orcaAmount.toNumber()} ORCA`,
     );
-    console.log({
-      keypair: this.keypair,
-      solToken,
-      solAmount,
-      orcaAmount,
-    });
     const swapPayload = await orcaSolPool.swap(
       this.keypair,
       solToken,
@@ -276,13 +271,13 @@ export class OrcaSwapClient {
 
     const orcaUSDCPool = orca.getPool(OrcaPoolConfig.ORCA_USDC);
     const orcaToken = orcaUSDCPool.getTokenA();
-    console.log('orcaToken:', orcaToken);
-    const usdcQuote = await orcaUSDCPool.getQuote(orcaToken, orcaAmount);
+    const orcaAmountDecimal = new Decimal(orcaAmount.toNumber());
+    const usdcQuote = await orcaUSDCPool.getQuote(orcaToken, orcaAmountDecimal);
     const usdcAmount = usdcQuote.getMinOutputAmount();
     const swapOrcaPayload = await orcaUSDCPool.swap(
       this.keypair,
       orcaToken,
-      orcaAmount,
+      orcaAmountDecimal,
       usdcAmount,
     );
     console.log(
@@ -294,8 +289,8 @@ export class OrcaSwapClient {
 
     return {
       txIds: [swapTxId, swapOrcaTxId],
-      inAmount: solAmount.toNumber(),
-      outAmount: usdcAmount.toNumber(),
+      inAmount: solAmount.toNumber() * SOL_DECIMAL,
+      outAmount: usdcAmount.toNumber() * USDC_DECIMAL,
     };
   }
 }

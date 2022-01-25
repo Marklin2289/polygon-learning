@@ -218,6 +218,8 @@ export const useExtendedWallet = (
         const extendedOrder = {...order, ...result};
         setOrderbook((_orderBook) => [extendedOrder, ..._orderBook]);
       }
+
+      mutate(); // Refresh balance
     },
     [useLive, cluster, keyPair],
   );
