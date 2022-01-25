@@ -217,7 +217,7 @@ export class OrcaSwapClient {
 
     const orcaSolPool = orca.getPool(OrcaPoolConfig.ORCA_SOL); // Orca pool for SOL
     const orcaToken = orcaSolPool.getTokenA(); // SOL token
-    const solAmount = new Decimal(size);
+    // const solAmount = new Decimal(size);
     const quote = await orcaSolPool.getQuote(orcaToken, orcaAmount);
     const solAmount = quote.getMinOutputAmount();
     console.log(
