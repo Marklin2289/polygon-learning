@@ -83,7 +83,7 @@ The price, confidence interval & exponent will be displayed in the component on 
 # 🏋️ Challenge
 
 {% hint style="tip" %}
-In `components/pyth/components/Connect.tsx`, implement `getPythData` by creating an instance of the `PythConnection` class and then registering the `onPriceChange` callback. You must replace the instances of `undefined` with working code to accomplish this. We don't want you to be overwhelmed by price data for every available product, so we have narrowed it down to SOL/USD for the purposes of this tutorial.
+In `components/protocols/pyth/components/Connect.tsx`, implement `getPythData` by creating an instance of the `PythConnection` class and then registering the `onPriceChange` callback. You must replace the instances of `undefined` with working code to accomplish this. We don't want you to be overwhelmed by price data for every available product, so we have narrowed it down to SOL/USD for the purposes of this tutorial.
 {% endhint %}
 
 **Take a few minutes to figure this out**
@@ -184,7 +184,7 @@ If you are interested in seeing the breakdown of the aggregated data, it is avai
 
 # ✅ Make sure it works
 
-Once you've made the necessary changes to `components/pyth/components/Connect.tsx` and saved the file, click on the toggle switch labeled "Price feed Off" on the right side of the screen to connect to Pyth & display the current price of the SOL/USD product! Be aware that the queries are being put through a public endpoint and are therefore subject to rate and data limiting - If you leave this price feed running for a while (~30 minutes), you will run out of requests and the feed will stop updating. Remember to switch it off before moving to the next step!
+Once you've made the necessary changes to `components/protocols/pyth/components/Connect.tsx` and saved the file, click on the toggle switch labeled "Price feed Off" on the right side of the screen to connect to Pyth & display the current price of the SOL/USD product! Be aware that the queries are being put through a public endpoint and are therefore subject to rate and data limiting - If you leave this price feed running for a while (~30 minutes), you will run out of requests and the feed will stop updating. Remember to switch it off before moving to the next step!
 
 ---
 

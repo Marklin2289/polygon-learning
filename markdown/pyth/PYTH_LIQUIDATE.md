@@ -16,7 +16,7 @@ The file `components/protocols/pyth/components/Liquidate.tsx` is being rendered 
 # 🏋️ Challenge
 
 {% hint style="tip" %}
-In `components/pyth/components/Liquidate.tsx`, implement X.
+In `components/protocols/pyth/components/Liquidate.tsx`, implement X.
 {% endhint %}
 
 **Take a few minutes to figure this out**
