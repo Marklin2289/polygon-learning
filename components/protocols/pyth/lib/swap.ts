@@ -1,9 +1,24 @@
 import {SOL_DECIMAL, USDC_DECIMAL} from './wallet';
-import {Cluster, Connection, Keypair, PublicKey} from '@solana/web3.js';
+import {accountSolscan, transactionSolscan} from './index';
+import {
+  Cluster,
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  SystemProgram,
+  TransactionInstruction,
+  LAMPORTS_PER_SOL,
+} from '@solana/web3.js';
+import {Token} from '@solana/spl-token';
 import {Jupiter, RouteInfo, TOKEN_LIST_URL} from '@jup-ag/core';
 import Decimal from 'decimal.js';
-import {getOrca, Network, OrcaPoolConfig} from '@orca-so/sdk';
+import {getOrca, Network, OrcaPoolConfig, OrcaU64} from '@orca-so/sdk';
 import * as bs58 from 'bs58';
+import {ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID} from '@solana/spl-token';
+
+// Set to true for additional logging
+const debug_logging = false;
 
 /**
  * Logging the Keypair object, you'll notice that the publicKey is a 32-byte UInt8Array & the secretKey is the entire 64-byte UInt8Array
@@ -33,7 +48,7 @@ const _account = Keypair.fromSecretKey(
 ); // This is given for testing purposes only. Do NOT use this keypair in any production code.
 
 // Token interface
-export interface Token {
+export interface TokenI {
   chainId: number; // 101,
   address: string; // '8f9s1sUmzUbVZMoMh6bufMueYH1u4BJSM57RCEvuVmFp',
   symbol: string; // 'TRUE',
@@ -48,6 +63,308 @@ export interface SwapResult {
   inAmount: number;
   outAmount: number;
   txIds: string[];
+}
+
+export class OrcaSwapClient {
+  constructor(
+    public readonly keypair: Keypair,
+    public readonly connection: Connection,
+  ) {}
+
+  async makeATA(mintPubkey: PublicKey) {
+    let ata = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID, // always ASSOCIATED_TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID, // always TOKEN_PROGRAM_ID
+      mintPubkey, // mint PublicKey
+      this.keypair.publicKey, // owner
+    );
+    console.log(`ATA for ${mintPubkey}: ${ata.toBase58()}`);
+    let tx = new Transaction().add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID, // always ASSOCIATED_TOKEN_PROGRAM_ID
+        TOKEN_PROGRAM_ID, // always TOKEN_PROGRAM_ID
+        mintPubkey, // mint
+        ata, // ata
+        this.keypair.publicKey, // owner of token account
+        this.keypair.publicKey, // fee payer
+      ),
+    );
+    const txHash = await this.connection.sendTransaction(tx, [this.keypair]);
+    console.log(`makeATA txhash: ${transactionSolscan('devnet', txHash)}`);
+  }
+
+  async closeATA(tokenAcctPubkey: PublicKey) {
+    let tx = new Transaction().add(
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID, // always TOKEN_PROGRAM_ID
+        tokenAcctPubkey, // token account which you want to close
+        this.keypair.publicKey, // destination
+        this.keypair.publicKey, // owner of token account
+        [], // for multisig
+      ),
+    );
+    const txHash = await this.connection.sendTransaction(tx, [
+      this.keypair,
+      this.keypair,
+    ]);
+    console.log(`closeATA txhash: ${transactionSolscan('devnet', txHash)}`);
+  }
+
+  async wrapSOL(amount: number, ata: PublicKey) {
+    let tx = new Transaction().add(
+      // Transfer SOL
+      SystemProgram.transfer({
+        fromPubkey: this.keypair.publicKey,
+        toPubkey: ata,
+        lamports: amount,
+      }),
+      // Sync Native instruction. @solana/spl-token will release it soon.
+      // Here use the raw instruction temporarily.
+      new TransactionInstruction({
+        keys: [
+          {
+            pubkey: ata,
+            isSigner: false,
+            isWritable: true,
+          },
+        ],
+        data: Buffer.from(new Uint8Array([17])),
+        programId: TOKEN_PROGRAM_ID,
+      }),
+    );
+    const txHash = await this.connection.sendTransaction(tx, [
+      this.keypair,
+      this.keypair,
+    ]);
+    console.log(`wSOL txhash: ${transactionSolscan('devnet', txHash)}`);
+  }
+
+  async buy(size: number): Promise<SwapResult> {
+    console.log(`Current keypair has
+      ${
+        (await this.connection.getBalance(this.keypair.publicKey)) /
+        LAMPORTS_PER_SOL
+      } SOL`);
+
+    const orca = getOrca(this.connection, Network.DEVNET);
+    const orcaUSDCPool = orca.getPool(OrcaPoolConfig.ORCA_USDC);
+    const usdcToken = orcaUSDCPool.getTokenB();
+    console.log('usdcToken', usdcToken);
+    const usdcAmount = new Decimal(size);
+    const usdcQuote = await orcaUSDCPool.getQuote(usdcToken, usdcAmount);
+    const orcaAmount = usdcQuote.getMinOutputAmount();
+    const swapOrcaPayload = await orcaUSDCPool.swap(
+      this.keypair,
+      usdcToken,
+      usdcAmount,
+      orcaAmount,
+    );
+    console.log(
+      `Swap ${usdcAmount.toString()} USDC for at least ${orcaAmount.toNumber()} ORCA`,
+    );
+    const swapOrcaTxId = await swapOrcaPayload.execute();
+    console.log('Swapped:', swapOrcaTxId, '\n');
+
+    const orcaSolPool = orca.getPool(OrcaPoolConfig.ORCA_SOL); // Orca pool for SOL
+    const orcaToken = orcaSolPool.getTokenA(); // SOL token
+    // const solAmount = new Decimal(size);
+    const quote = await orcaSolPool.getQuote(orcaToken, orcaAmount);
+    const solAmount = quote.getMinOutputAmount();
+    console.log(
+      `Swap ${orcaAmount.toNumber()} ORCA for at least ${solAmount.toString()} SOL `,
+    );
+    // orcaAmount is included because in the Orca smart contract there's a condition if the swap produces
+    // less than the amount requested, the transaction will fail and the user will keep their SOL.
+    const swapPayload = await orcaSolPool.swap(
+      this.keypair,
+      orcaToken,
+      orcaAmount,
+      solAmount,
+    );
+
+    const swapTxId = await swapPayload.execute();
+    console.log('Swapped:', swapTxId, '\n');
+
+    return {
+      txIds: [swapTxId, swapOrcaTxId],
+      inAmount: usdcAmount.toNumber() * USDC_DECIMAL,
+      outAmount: solAmount.toNumber() * SOL_DECIMAL,
+    };
+  }
+
+  async sell(size: number): Promise<SwapResult> {
+    console.log(`Current keypair has
+      ${
+        (await this.connection.getBalance(this.keypair.publicKey)) /
+        LAMPORTS_PER_SOL
+      } SOL`);
+
+    const orca = getOrca(this.connection, Network.DEVNET);
+    const orcaSolPool = orca.getPool(OrcaPoolConfig.ORCA_SOL);
+    const orcaUSDCPool = orca.getPool(OrcaPoolConfig.ORCA_USDC);
+    const solToken = orcaSolPool.getTokenB();
+    const orcaToken = orcaSolPool.getTokenA();
+    const usdcToken = orcaUSDCPool.getTokenB();
+
+    const solPK = new PublicKey(solToken.mint.toString());
+    const orcaPK = new PublicKey(orcaToken.mint.toString());
+    const usdcPK = new PublicKey(usdcToken.mint.toString());
+
+    const solAmountDecimal = new Decimal(size);
+    const solAmountU64 = OrcaU64.fromDecimal(solAmountDecimal, 9);
+
+    const quote = await orcaSolPool.getQuote(solToken, solAmountDecimal);
+    const orcaQuoteMinAmount = quote.getMinOutputAmount();
+    const orcaAmountDecimal = new Decimal(orcaQuoteMinAmount.toNumber());
+    const usdcQuote = await orcaUSDCPool.getQuote(orcaToken, orcaAmountDecimal);
+    const usdcQuoteMinAmount = usdcQuote.getMinOutputAmount();
+
+    if (debug_logging) {
+      let ownedTokenAccts = await this.connection.getParsedTokenAccountsByOwner(
+        this.keypair.publicKey,
+        {programId: TOKEN_PROGRAM_ID},
+      );
+      let i = 0;
+      for (i = 0; i < ownedTokenAccts.value.length; i++) {
+        console.log(
+          'Owned Token Account:',
+          accountSolscan('devnet', ownedTokenAccts.value[i].pubkey.toString()),
+        );
+        let mintInfo = await this.connection.getParsedAccountInfo(
+          ownedTokenAccts.value[i].pubkey,
+        );
+        console.log('mintInfo:', mintInfo);
+        console.log(
+          'mintInfo Mint PublicKey:',
+          accountSolscan(
+            'devnet',
+            mintInfo.value?.data.parsed.info.mint.toString(),
+          ),
+        );
+        console.log(
+          'mintInfo Owner:',
+          accountSolscan('devnet', mintInfo.value?.owner.toString()),
+        );
+        console.log(
+          'mintInfo TokenAccount Owner:',
+          accountSolscan(
+            'devnet',
+            mintInfo.value?.data.parsed.info.owner.toString(),
+          ),
+        );
+        console.log('Initialized:', mintInfo.value.data.parsed.info.state);
+
+        // If we need to clean up the Associated Token Accounts:
+        // const removeATA = await this.closeATA(ownedTokenAccts.value[i].pubkey);
+        // console.log('Removed ATA:', removeATA);
+      }
+
+      // If we need to create Associated Token Accounts:
+      // const solATA = await this.makeATA(solPK);
+      // console.log('SOL Associated Token Account Created:', solATA);
+      // const orcaATA = await this.makeATA(orcaPK);
+      // console.log('ORCA Associated Token Account Created:', orcaATA);
+      // const usdcATA = await this.makeATA(usdcPK);
+      // console.log('USDC Associated Token Account Created:', usdcATA);
+
+      const solAssocTknAcct = new PublicKey(
+        'A3DCHaR9fYy4b1c8va7nBSgGJNoHN8XYQidvGAddz5WN',
+      );
+
+      const orcaAssocTknAcct = new PublicKey(
+        'A3DCHaR9fYy4b1c8va7nBSgGJNoHN8XYQidvGAddz5WN',
+      );
+
+      const usdcAssocTknAcct = new PublicKey(
+        'HZzztE5ABaQcpecxDaap9spsmEYNWxqZCE8bUcN73vEp',
+      );
+
+      // If we need to wrap SOL:
+      // const solToWrap = 0.5 * LAMPORTS_PER_SOL;
+      // const wrapTheSol = await this.wrapSOL(solToWrap, solAssocTknAcct);
+      // console.log(wrapTheSol)
+
+      let solATAInfo = await this.connection.getParsedAccountInfo(
+        solAssocTknAcct,
+      );
+      let orcaATAInfo = await this.connection.getParsedAccountInfo(
+        orcaAssocTknAcct,
+      );
+      let usdcATAInfo = await this.connection.getParsedAccountInfo(
+        usdcAssocTknAcct,
+      );
+    }
+
+    console.log(
+      `Swap ${solAmountDecimal.toString()} SOL for at least ${orcaQuoteMinAmount.toNumber()} ORCA`,
+    );
+
+    const swapPayload = await orcaSolPool.swap(
+      this.keypair,
+      solToken,
+      solAmountU64,
+      orcaQuoteMinAmount,
+    );
+
+    if (debug_logging) {
+      console.log('swapPayload:', swapPayload);
+
+      let j = 0;
+      let k = 0;
+      let l = 0;
+      for (j = 0; j < swapPayload.transaction.instructions.length; j++) {
+        console.log(
+          `Transaction Instruction ProgramId: %c${swapPayload.transaction.instructions[
+            j
+          ].programId.toString()}`,
+          'color: #bada55',
+        );
+        for (
+          k = 0;
+          k < swapPayload.transaction.instructions[j].keys.length;
+          k++
+        ) {
+          console.log(
+            'Transaction Instruction PublicKey:',
+            swapPayload.transaction.instructions[j].keys[k].pubkey.toString(),
+            'isSigner:',
+            swapPayload.transaction.instructions[j].keys[k].isSigner,
+            'isWritable:',
+            swapPayload.transaction.instructions[j].keys[k].isWritable,
+          );
+        }
+      }
+
+      for (l = 0; l < swapPayload.signers.length; l++) {
+        console.log(
+          'swapPayload Signer:',
+          swapPayload.signers[l].publicKey.toString(),
+        );
+      }
+    }
+
+    const swapTxId = await swapPayload.execute();
+    console.log('Swapped:', swapTxId, '\n');
+
+    const swapOrcaPayload = await orcaUSDCPool.swap(
+      this.keypair,
+      orcaToken,
+      orcaAmountDecimal,
+      usdcQuoteMinAmount,
+    );
+    console.log(
+      `Swap ${orcaAmountDecimal.toNumber()} ORCA for at least ${usdcQuoteMinAmount.toNumber()} USDC`,
+    );
+
+    const swapOrcaTxId = await swapOrcaPayload.execute();
+    console.log('Swapped:', swapOrcaTxId, '\n');
+
+    return {
+      txIds: [swapTxId, swapOrcaTxId],
+      inAmount: solAmountDecimal.toNumber() * SOL_DECIMAL,
+      outAmount: usdcQuoteMinAmount.toNumber() * USDC_DECIMAL,
+    } as SwapResult;
+  }
 }
 
 /**
@@ -180,117 +497,6 @@ export class JupiterSwapClient {
       txIds: [swapResult.txid],
       inAmount: swapResult.inputAmount,
       outAmount: swapResult.outputAmount,
-    };
-  }
-}
-
-export class OrcaSwapClient {
-  constructor(
-    public readonly keypair: Keypair,
-    public readonly connection: Connection,
-  ) {}
-  /**
-   * @param size A `Decimal` formatted number
-   * @returns
-   *  - `txIds`: [`swapTxId`, `swapOrcaTxId`]
-   *  - `inAmount`: `solAmount.toNumber()`
-   *  - `outAmount`: `usdcAmount.toNumber()`
-   */
-  async buy(size: number): Promise<SwapResult> {
-    const orca = getOrca(this.connection, Network.DEVNET);
-    const orcaUSDCPool = orca.getPool(OrcaPoolConfig.ORCA_USDC);
-    const usdcToken = orcaUSDCPool.getTokenB();
-    console.log('usdcToken', usdcToken);
-    const usdcAmount = new Decimal(size);
-    const usdcQuote = await orcaUSDCPool.getQuote(usdcToken, usdcAmount);
-    const orcaAmount = usdcQuote.getMinOutputAmount();
-    const swapOrcaPayload = await orcaUSDCPool.swap(
-      this.keypair,
-      usdcToken,
-      usdcAmount,
-      orcaAmount,
-    );
-    console.log(
-      `Swap ${usdcAmount.toString()} USDC for at least ${orcaAmount.toNumber()} ORCA`,
-    );
-    const swapOrcaTxId = await swapOrcaPayload.execute();
-    console.log('Swapped:', swapOrcaTxId, '\n');
-
-    const orcaSolPool = orca.getPool(OrcaPoolConfig.ORCA_SOL); // Orca pool for SOL
-    const orcaToken = orcaSolPool.getTokenA(); // SOL token
-    // const solAmount = new Decimal(size);
-    const quote = await orcaSolPool.getQuote(orcaToken, orcaAmount);
-    const solAmount = quote.getMinOutputAmount();
-    console.log(
-      `Swap ${orcaAmount.toNumber()} ORCA for at least ${solAmount.toString()} SOL `,
-    );
-    // orcaAmount is included because in the Orca smart contract there's a condition if the swap produces
-    // less than the amount requested, the transaction will fail and the user will keep their SOL.
-    const swapPayload = await orcaSolPool.swap(
-      this.keypair,
-      orcaToken,
-      orcaAmount,
-      solAmount,
-    );
-
-    const swapTxId = await swapPayload.execute();
-    console.log('Swapped:', swapTxId, '\n');
-
-    return {
-      txIds: [swapTxId, swapOrcaTxId],
-      inAmount: usdcAmount.toNumber() * USDC_DECIMAL,
-      outAmount: solAmount.toNumber() * SOL_DECIMAL,
-    };
-  }
-  /**
-   * @param size A `Decimal` formatted number
-   * @returns
-   *  - `txIds`: [`swapTxId`, `swapOrcaTxId`]
-   *  - `inAmount`: `solAmount.toNumber()`
-   *  - `outAmount`: `usdcAmount.toNumber()`
-   */
-  async sell(size: number): Promise<SwapResult> {
-    const orca = getOrca(this.connection, Network.DEVNET);
-    const orcaSolPool = orca.getPool(OrcaPoolConfig.ORCA_SOL);
-    const solToken = orcaSolPool.getTokenA();
-    const solAmount = new Decimal(size);
-    const quote = await orcaSolPool.getQuote(solToken, solAmount);
-    const orcaAmount = quote.getMinOutputAmount();
-    console.log(
-      `Swap ${solAmount.toString()} SOL for at least ${orcaAmount.toNumber()} ORCA`,
-    );
-    const swapPayload = await orcaSolPool.swap(
-      this.keypair,
-      solToken,
-      solAmount,
-      orcaAmount,
-    );
-
-    const swapTxId = await swapPayload.execute();
-    console.log('Swapped:', swapTxId, '\n');
-
-    const orcaUSDCPool = orca.getPool(OrcaPoolConfig.ORCA_USDC);
-    const orcaToken = orcaUSDCPool.getTokenA();
-    const orcaAmountDecimal = new Decimal(orcaAmount.toNumber());
-    const usdcQuote = await orcaUSDCPool.getQuote(orcaToken, orcaAmountDecimal);
-    const usdcAmount = usdcQuote.getMinOutputAmount();
-    const swapOrcaPayload = await orcaUSDCPool.swap(
-      this.keypair,
-      orcaToken,
-      orcaAmountDecimal,
-      usdcAmount,
-    );
-    console.log(
-      `Swap ${orcaAmount.toNumber()} ORCA for at least ${usdcAmount.toNumber()} USDC`,
-    );
-
-    const swapOrcaTxId = await swapOrcaPayload.execute();
-    console.log('Swapped:', swapOrcaTxId, '\n');
-
-    return {
-      txIds: [swapTxId, swapOrcaTxId],
-      inAmount: solAmount.toNumber() * SOL_DECIMAL,
-      outAmount: usdcAmount.toNumber() * USDC_DECIMAL,
     };
   }
 }

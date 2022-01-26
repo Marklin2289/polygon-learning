@@ -36,7 +36,10 @@ import {
 import _ from 'lodash';
 import * as Rx from 'rxjs';
 
-const connection = new Connection(clusterApiUrl(PYTH_NETWORKS.DEVNET));
+const connection = new Connection(
+  clusterApiUrl(PYTH_NETWORKS.DEVNET),
+  'singleGossip',
+);
 const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
 const pythConnection = new PythConnection(connection, pythPublicKey);
 

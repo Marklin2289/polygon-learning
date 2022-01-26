@@ -36,11 +36,28 @@ export const transactionExplorer = (network: string) => (hash: string) => {
 };
 
 /**
- * Helper for generating a transaction URL on solscan.io
+ * Helper for generating an account URL on solscan.io
  * @param network - A Solana cluster identifier, one of ['mainnet-beta', 'devnet', 'testnet'] * `localnet` is not supported.
+ * @param pubkey - A valid Solana public key
  * @returns URL
  */
-export const transactionSolscan = (network: string) => (hash: string) => {
+export const accountSolscan = (network: string, pubkey: string) => {
+  if (network === PYTH_NETWORKS.DEVNET) {
+    return `https://solscan.io/account/${pubkey}?cluster=devnet`;
+  } else if (network === PYTH_NETWORKS.TESTNET) {
+    return `https://solscan.io/account/${pubkey}?cluster=testnet`;
+  } else if (network === PYTH_NETWORKS.MAINNET) {
+    return `https://solscan.io/account/${pubkey}`;
+  }
+};
+
+/**
+ * Helper for generating a transaction URL on solscan.io
+ * @param network - A Solana cluster identifier, one of ['mainnet-beta', 'devnet', 'testnet'] * `localnet` is not supported.
+ * @param hash - A valid Solana transaction hash
+ * @returns URL
+ */
+export const transactionSolscan = (network: string, hash: string) => {
   if (network === PYTH_NETWORKS.DEVNET) {
     return `https://solscan.io/tx/${hash}?cluster=devnet`;
   } else if (network === PYTH_NETWORKS.TESTNET) {
