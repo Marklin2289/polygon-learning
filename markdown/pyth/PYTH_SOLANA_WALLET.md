@@ -1,4 +1,4 @@
-Now that we are able to get Pyth price data, we need to take a detour away from Pyth for a moment to get our account interface figured out. The liquidation bot is going to need some tokens to trade on our behalf! We want to be able to leverage that data and interact with a Decentralized Exchange to swap tokens. We're going to look at how to implement a display of our token balances on the front-end, so that we can see the changes as the liquidation bot is performing the swaps. We have two different displays to consider: The **mock wallet** which is not connected to Solana, to be used for testing purposes. Also the **live wallet** - pulling data from an existing, funded account on Solana that can be used on either devnet or mainnet.
+Now that we are able to get Pyth price data, we need to take a detour away from Pyth for a moment to get our account interface figured out. The liquidation bot is going to need some tokens to trade on our behalf! We want to be able to leverage that data and interact with a DEX to swap tokens. We're going to look at how to implement a display of our token balances on the frontend, so that we can see the changes as the liquidation bot is performing the swaps. We have two different displays to consider: The **mock wallet** which is not connected to Solana, to be used for testing purposes. And the **live wallet** that pulls data from an existing, funded account on Solana to be used on either devnet or mainnet.
 
 _Remember the safety information about the risks of using real SOL from the introduction_!
 
@@ -6,7 +6,7 @@ _Remember the safety information about the risks of using real SOL from the intr
 
 There's a comprehensive explanation of the code we are using in the `Wallet.tsx` component below. For now, just play around with the actual component on the right side of the screen. It's a good opportunity to familiarize yourself with the display. There are default balance values, and you can switch between the **mock wallet** and the **live wallet**.
 
-We assume that **you _will not_ want to use an account containing real SOL on mainnet** with this project as-is - there are no safeguards in this code. Don't be alarmed, we just want to be very clear on that point! It's quite easy to tell the difference between the mock and live wallet displays. Only the mock wallet can be reset. _This is only truly relevant for testing_ - there is no way to reset balances of an on-chain account (immutable public ledgers and all 😉).
+We assume that **you _will not_ want to use an account containing real SOL on mainnet** with this project as-is. There are no safeguards in this code. Don't be alarmed, we just want to be very clear on that point! It's quite easy to tell the difference between the mock and live wallet displays. Only the mock wallet can be reset. _This is only truly relevant for testing_. There is no way to reset balances on a live account (immutable public ledgers and all 😉).
 
 Once you click the toggle over to the **live wallet**, you'll notice some changes:
 
@@ -14,7 +14,7 @@ Once you click the toggle over to the **live wallet**, you'll notice some change
 - A textinput is included for you to enter a private key which will then display the associated public key & any SOL or USDC tokens of that keypair.
 - The balance of ORCA tokens is also displayed, which is only relevant to swaps on devnet.
 
-We default to using devnet, and you should also notice that the balance values change to zero when switching to the **live wallet**. This is because the balance of the randomly generated public key is, understandably, zero.
+We default to using devnet. You should also notice that the balance values change to zero when switching to the **live wallet** since our randomly generated default account has not been funded.
 
 # 🔐 Getting your private key
 
@@ -81,8 +81,8 @@ It's important to get some SOL on devnet to ensure that the balance is being dis
 
 Here's a quick method using a faucet website:
 
-- Go to <https://solfaucet.com/> and paste the public key you just created in Phantom into the textinput in the middle of the page
-- You can request a maximum of 2 SOL per attempt, higher amounts will not work. This is due to limits on the airdrop function on devnet. Click on the blue "DEVNET" button to complete the airdrop.
+- Go to <https://solfaucet.com/> and paste the public key you just created in Phantom into the text input in the middle of the page
+- You can request a maximum of 2 SOL per attempt. Higher amounts will not work. This is due to limits on the airdrop function on devnet. Click on the blue "DEVNET" button to complete the airdrop.
 
 You can confirm the balance change in Phantom as well as on the Wallet component in the Pathway. We'll cover how to swap some SOL for USDC when it becomes relevant further ahead in the pathway. For now, we've got some building to do 👉
 
@@ -153,7 +153,7 @@ export const ORCA_DECIMAL = 10 ** 6;
 
 We're making a custom hook to handle our wallet interactions which we will call `useExtendedWallet`. Note that this hook combines the functionality for our mock wallet as well as using a **secret key** for an existing (and funded) keypair. You might expect to use a wallet adapter to tap into a browser extension wallet like Phantom. The frequency of swapping we'll be performing requires that we have an alternate, faster method to sign transactions. Nobody wants to sit in front of a computer clicking all day, do they? 😉
 
-We'll start with the function signature for `useExtendedWallet`. Notice that we're passing a boolean value to dtermine which wallet we'll use. We also need to specify which Solana cluster to target, devnet or mainnet-beta. Price will default to zero.
+We'll start with the function signature for `useExtendedWallet`. Notice that we're passing a boolean value to determine which wallet we'll use. We also need to specify which Solana cluster to target, devnet or mainnet-beta. Price will default to zero.
 
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
@@ -165,7 +165,7 @@ export const useExtendedWallet = (
 ) => {
 ```
 
-How `setKeyPair` works here is to help us generate the keypair from the input secret key, otherwise it will generate a random keypair for the mock wallet. The `useEffect` hook lets us determine what to do if there's a change in the value of `secretKey`, which would indicate a user has entered a value into the wallet component.
+`setKeyPair` works to help us generate the keypair from the input secret key, otherwise it will generate a random keypair for the mock wallet. The `useEffect` hook lets us determine what to do if there's a change in the value of `secretKey`, which would indicate a user has entered a value into the wallet component.
 
 {% hint style="info" %}
 It is a requirement of the Jupiter SDK that we provide a keypair to be able to fetch market data.
@@ -207,7 +207,7 @@ The `orderBook` is maintained in our app state, and keeps track of the buy and s
 const [orderBook, setOrderbook] = useState<Order[]>([]);
 ```
 
-The `balanceFetcher` function is a straightforward axios POST request to the Solana cluster which passes the `getBalance` method for the keypair to return the SOL balance and `getTokenAccountsByOwner` for both the SPL tokens - USDC and ORCA.
+The `balanceFetcher` function is a straightforward axios POST request to the Solana cluster which passes the `getBalance` method for the keypair to return the SOL balance and `getTokenAccountsByOwner` for both SPL tokens - USDC and ORCA.
 
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
@@ -259,7 +259,7 @@ const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
   });
 ```
 
-By leveraging the `useSWR` hook here, we can make sure that the amounts being displayed for the balance of our tokens on the front-end is accurate. The values are cached for us, and even on a slow connection they'll update in a reasonable amount of time. We're also giving a refresh interval of five seconds.
+By leveraging the `useSWR` hook here, we can make sure that the amounts being displayed for the balance of our tokens on the frontend are accurate. The values are cached for us, and even on a slow connection they'll update in a reasonable amount of time. We're also setting a refresh interval of five seconds.
 
 Putting a call to `mutate` in a `useEffect` hook with a dependency of `cluster` means that any time we switch between the mock wallet and the live wallet the balance will be handled by `useSWR`. Clean and simple code, keeps the kids happy 👍
 
@@ -495,7 +495,7 @@ return {
 # 🏋️ Challenge
 
 {% hint style="tip" %}
-In `components/protocols/pyth/lib/wallet.tsx`, finish implementing the `useEffect` to set the keypair in the app state based on the user input of the `secretKey`. The `secretKey` is what is pasted into the textinput of the **live wallet**. You must replace the instances of `undefined` with working code to accomplish this.
+In `components/protocols/pyth/lib/wallet.tsx`, finish implementing the `useEffect` to set the keypair in the app state based on the user input of the `secretKey`. The `secretKey` is what is pasted into the text input of the **live wallet**. You must replace the instances of `undefined` with working code to accomplish this.
 {% endhint %}
 
 **Take a few minutes to figure this out**

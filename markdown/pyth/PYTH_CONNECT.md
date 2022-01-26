@@ -1,6 +1,6 @@
 # 🤨 What are we building, here?
 
-Using price data from Pyth, we are going to build a minimum viable product (MVP) which supports automating the task of swapping between SOL and USDC tokens using a decentralized exchange. The goal is to be able to buy when the price is low and sell when the price is high, to generate a yield over time. There are several ways of referring to this behavior, but for the purposes of this Pathway we will refer to the MVP as a "liquidation bot".
+Using price data from Pyth, we are going to build a minimum viable product ("MVP") which supports automating the task of swapping between SOL and USDC tokens using a decentralized exchange ("DEX"). The goal is to be able to buy when the price is low and sell when the price is high. There are several ways of referring to this behavior, but for the purposes of this Pathway we will refer to the MVP as a "liquidation bot".
 
 To complete this project, we must implement the following:
 
@@ -11,23 +11,25 @@ To complete this project, we must implement the following:
 - The logic to determine when to send a swap transaction
 - Wire it all together into a working set of components
 
-The purpose of this Pathway is to explain details of using Pyth and give you hands-on experience by incorporating price data into a useful application. Unrelated to Pyth itself yet still important, the rest of the components will strengthen your understanding of how to visualize market fluctuations on a chart and perform swaps on a Decentralized Exchange.
+The purpose of this Pathway is to give you hands-on experience using Pyth by incorporating price data into a useful application. Unrelated to Pyth but still important, the rest of the components will strengthen your understanding of how to visualize market fluctuations on a chart and perform swaps on a DEX.
 
-In essence the "bot" we are building is more like Wall-E than The Terminator. We're oriented on having fun and learning more than ruthless efficiency.
+In essence the "bot" we are building is more like Wall-E than The Terminator. We're focused more on having fun and learning, than on ruthless efficiency.
 
 ![Wall-E and The Terminator](walle-terminator.jpg)
 
 # 🧐 What is Pyth, anyway?
 
+Smart contracts are isolated programs that automate the execution of tasks based on certain inputs. Sometimes those inputs occur off-chain. That means the smart contract needs a trusted way to determine that an input has occurred off-chain in order to execute actions on-chain. That service is provided by oracle protocols. These are a way to connect smart contracts to the outside world.
+
 [Pyth](https://pyth.network) is an oracle protocol which allows publishers to include their price data for various asset pairs or _products_ on the [Solana](https://solana.com) blockchain. There are three sets of participants interacting with the Pyth protocol:
 
-1. **Publishers** are first-party data providers who submit their asset pricing data to Pyth. Publishers are incentivized to publish accurate and timely prices by the data staking and reward distribution mechanisms.
+1. **Publishers** are first-party data providers who submit their asset pricing data to Pyth. Publishers are incentivized to publish accurate and timely prices by data staking and reward distribution mechanisms.
 2. **Consumers** use the price data being aggregated by Pyth's on-chain program, optionally paying data fees to Delegators to promote accuracy of the price data.
-3. **Delegators** stake tokens and earn data fees, and they can potentially lose their stake if the aggregate price data is inaccurate. Delegators also set the stake-weights of the Publishers to maximize the robustness of the price data.
+3. **Delegators** stake tokens and earn data fees, and they can potentially lose their stake if the aggregate price data is inaccurate. Delegators are responsible for helping the Publishers to maximize the robustness of the price data.
 
 The Pyth on-chain program maintains accounts on Solana which are responsible for tracking the products and their current price data. Pyth aims to make accurate, high-resolution financial market data easily accessible on Solana.
 
-It is possible for consumers to interact with this data both on and off-chain, depending on their needs. \
+It is possible for consumers to interact with this data both on- and off-chain, depending on their needs. \
 Pyth uses three types of account on Solana:
 
 1. **Product** accounts store the metadata of a product such as its symbol and asset type.
@@ -35,8 +37,12 @@ Pyth uses three types of account on Solana:
 3. **Mapping** accounts maintain a linked list of other accounts - this allows applications to easily enumerate the full list of products served by Pyth.
 
 The goal of Pyth's aggregation algorithm (say _that_ five times fast!) is to combine the prices reported by publishers, giving more weight to prices with a tighter confidence interval.
-This helps consumers to access more accurate price data, with less worry about a single publisher or even a small number of publishers moving the aggregate price by themselves.
-Confidence weighting is necessary because publishers have different degrees of precision in their ability to observe a product - another factor being that exchanges with more liquidity have tighter spreads than those with less liquidity.
+This helps consumers access more accurate price data, without worrying about a single publisher or even a small number of publishers moving the aggregate price by themselves.
+Confidence weighting is necessary because publishers have different degrees of precision in their ability to observe a product. Another factor is that exchanges with more liquidity have tighter spreads than those with less liquidity.
+
+{% hint style="info" %}
+A spread can have several meanings in relation to finance. It often refers to the difference between two prices. The most common definition is the gap between the bid price and the ask price of an asset, the "bid-ask spread".
+{% endhint %}
 
 ---
 
@@ -60,9 +66,9 @@ Pyth publishers must supply a confidence interval because in real markets, _ther
 
 A confidence **interval** is a range of values with an upper bound and a lower bound, computed at a particular confidence **level**.
 
-Publishers who submit their price data to Pyth do not all use the same methods to determine their confidence in a given price. Because of the potential for a small number of publishers to influence the reported price of an asset, it is therefore important to use an _aggregate_ price. The confidence interval published on Pyth is also an aggregated value, based on the confidence being reported by Publishers. It is best practice for Publishers to provide high quality data, a confidence interval which is too low can lead to problems for consumers.
+Publishers who submit their price data to Pyth do not all use the same methods to determine their confidence in a given price. Because of the potential for a small number of publishers to influence the reported price of an asset, it is therefore important to use an _aggregate_ price. The confidence interval published on Pyth is also an aggregated value, based on the confidence being reported by Publishers. It is best practice for Publishers to provide high quality data. A confidence interval that is too low can lead to problems for consumers.
 
-Pyth calculates the price and confidence intervals for all products on a constant basis - Any Publisher behind by 25 slots (approximately 10 seconds) is considered inactive and their prices are not included in the aggregate until they can catch up, which prevents stale data from being served.
+Pyth calculates the price and confidence intervals for all products on a constant basis. Any Publisher behind by 25 slots (approximately 10 seconds) is considered inactive and their prices are not included in the aggregate until they can catch up, which prevents stale data from being served.
 
 {% hint style="tip" %}
 "When consuming Pyth prices, we recommend using the confidence interval to protect your users from these unusual market conditions. The simplest way to do so is to use Pyth's confidence interval to compute a range in which the true price (probably) lies. You obtain this range by adding and subtracting a multiple of the confidence interval to the Pyth price; the bigger the multiple, the more likely the price lies within that range. \
@@ -116,7 +122,7 @@ const Connect = () => {
 - To connect to Pyth, use the `PythConnection` class from `@pythnetwork/client` - You'll need to supply a JSON-RPC connection and a Pyth program public key. Seasoned developers may wish to [dive into the code](https://github.com/pyth-network/pyth-client-js/blob/3de72323598131d6d14a9dc9f48f5f225b5fbfd2/src/PythConnection.ts#L29) to see what it's doing.
 - There is a function for mapping Solana clusters to the public key of the Pyth program: `getPythProgramKeyForCluster`. \
   You'll need to supply the name of the Solana cluster you want to get Pyth data from (`mainnet-beta`, `devnet` or `testnet`).
-- The onPriceChange callback will be invoked every time a Pyth price gets updated. This callback gets two arguments:
+- The `onPriceChange` callback will be invoked every time a Pyth price gets updated. This callback gets two arguments:
   - `price` contains the official Pyth price and confidence, along with the component prices that were combined to produce this result.
   - `product` contains metadata about the price feed, such as the symbol (e.g., "Crypto.SOL/USD") and the number of decimal points.
 - Once you've set up the connection and the `onPriceChange` callback, you'll be able to tap into the price feed with a simple `pythConnection.start()`! \
@@ -170,9 +176,9 @@ const Connect = () => {
 
 **What happened in the code above?**
 
-- We created a `connection` instance of the `Connection` class using the `new` constructor, passing the function `clusterApiUrl` which returns the RPC endpoint URL of the given Solana cluster. `PYTH_NETWORKS.DEVNET` is a constant defined in the file `types/index.ts`. Slightly more verbose than supplying the string "devnet", though it is more readable and in this way we are not hardcoding the value.
+- We created a `connection` instance of the `Connection` class using the `new` constructor, and passing the function `clusterApiUrl` which returns the RPC endpoint URL of the given Solana cluster. `PYTH_NETWORKS.DEVNET` is a constant defined in the file `types/index.ts`. Slightly more verbose than supplying the string "devnet", though it is more readable and in this way we are not hard-coding the value.
 - We're passing the `checked` boolean to the `getPythData` function to operate starting/stopping the price feed using the antd toggle component.
-- After registering the `onPriceChange` callback on the `pythConnection`, we can perform any actions necessary for our app to function - Using conditional statements to change the behavior of the app depending on the product symbol, price or confidence interval.
+- After registering the `onPriceChange` callback on the `pythConnection`, we can perform any actions necessary for our app to function. Using conditional statements to change the behavior of the app depending on the product symbol, price or confidence interval.
 - `\xB1` is the escaped Hex code for the Unicode character `±`, "plus or minus" - indicating the following value is the confidence interval.
 - We need to provide a way to stop listening to the price feed, in this case when the toggle switch component is turned off it will call `pythConnection.stop()`, removing the callback.
 
@@ -184,14 +190,14 @@ If you are interested in seeing the breakdown of the aggregated data, it is avai
 
 # ✅ Make sure it works
 
-Once you've made the necessary changes to `components/protocols/pyth/components/Connect.tsx` and saved the file, click on the toggle switch labeled "Price feed Off" on the right side of the screen to connect to Pyth & display the current price of the SOL/USD product! Be aware that the queries are being put through a public endpoint and are therefore subject to rate and data limiting - If you leave this price feed running for a while (~30 minutes), you will run out of requests and the feed will stop updating. Remember to switch it off before moving to the next step!
+Once you've made the necessary changes to `components/protocols/pyth/components/Connect.tsx` and saved the file, click on the toggle switch labeled "Pyth" on the right side of the screen to connect to Pyth & display the current price of the SOL/USD product! Be aware that the queries are being put through a public endpoint and are therefore subject to rate and data limiting. If you leave this price feed running for a while (~30 minutes), you will run out of requests and the feed will stop updating. **Remember to switch it off before moving to the next step!**
 
 ---
 
 # 🏁 Conclusion
 
 We established a connection to the Pyth price feed on Solana using the JavaScript Pyth client. The connection can be regulated by listening to the price feed using a callback function and removing that callback when we want to stop listening.
-We also discussed three key concepts involved in price data: Aggregate price, confidence interval and the exponent used to convert price data from fixed-point to floating point.
+We also discussed three key concepts involved in price data: Aggregate price, confidence interval, and the exponent used to convert price data from fixed-point to floating point.
 
 If you'd like, take a few minutes to learn more about how Pyth's [account structure](https://docs.pyth.network/how-pyth-works/account-structure) & [price aggregation](https://docs.pyth.network/how-pyth-works/price-aggregation) work by reviewing the official documentation.
 

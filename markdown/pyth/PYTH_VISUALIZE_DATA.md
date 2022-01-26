@@ -1,8 +1,10 @@
-To better understand and derive value from the Pyth price data for a given product (SOL/USDC), we'll want to visualize that data in a meaningful format. A line chart is a basic way to display an increase or decrease in a value over time, so we will look at how to effectively represent our price data using a pre-made component library called [recharts](https://recharts.org/).
+To better understand and derive value from the Pyth price data for a given product like SOL/USDC, we'll want to visualize that data in a meaningful format. A line chart is a basic way to display an increase or decrease in a value over time, so we will look at how to effectively represent our price data using a pre-made component library called [recharts](https://recharts.org/).
 
-This helps to illustrate the price data coming from Pyth and also sets the stage for us to be able to to perform buy/sell operations using a Decentralized Exchange. We'll be calculating our buy and sell signals based on the Exponential Moving Average (EMA) which is a naive and un-opinionated method of achieving a yield. There are more complex ways of deciding when and how much to trade, which are all beyond the scope of this pathway. Using the EMA, as long as the price trends upwards for the amount of time you are trading, you would expect to see a positive yield. Since this is an exercise in buying low and selling as the price rises, it's simple enough to avoid spending over your target by stopping the liquidation bot.
+This helps to illustrate the price data coming from Pyth and also sets the stage for us to be able to to perform buy/sell operations using a DEX. We'll be calculating our buy and sell signals based on the Exponential Moving Average (EMA) which is a naive and un-opinionated method of achieving yield. There are more complex ways of deciding when and how much to trade, which are all beyond the scope of this pathway. Using the EMA, as long as the price trends upwards for the amount of time you are trading, you would expect to see a positive yield. Since this is an exercise in buying low and selling as the price rises, it's simple enough to avoid spending over your target by stopping the liquidation bot.
 
-First, we need to calculate the Simple Moving Average (SMA), to kickstart the EMA with a point of reference. This is why you will not see the green line representing the EMA on the chart right away when starting it up.
+{% hint style="info" %}
+We need to calculate the Simple Moving Average (SMA), to kickstart the EMA with a point of reference. This is why you will not see the green line representing the EMA on the chart right away when starting it up.
+{% endhint %}
 
 Slightly separate topics, though worth considering if you wish to build upon the basics of this Pathway: What is a novel and interesting way to calculate when to buy and when to sell? Are there ways in which you might safeguard against a particularly wide confidence interval, or even a sudden shock to the market?
 
@@ -27,7 +29,7 @@ The component being rendered on the right is defined in `components/protocols/py
 
 Because what we are building is effectively a financial application, we want to display the moving average we'll be using to determine our buy & sell signals for the tokens we want to trade.
 
-For the hard-boiled engineers and the truly devoted learners, there is a dry explanation of Exponential Moving Average (EMA) calculations available on [Wikipedia](https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average) - but this is likely to be _very_ confusing to most readers. Luckily, there is a much simpler way to visualize this formula and what it will produce!
+For the hard-boiled engineers and the truly devoted learners, there is a dry explanation of Exponential Moving Average (EMA) calculations available on [Wikipedia](https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average) but this is likely to be _very_ confusing to most readers. Luckily, there is a much simpler way to visualize this formula and what it will produce!
 
 The EMA formula can be expressed as:
 
@@ -42,10 +44,10 @@ The EMA formula can be expressed as:
 const ema = (newData.price - previousEma) * smoothingFactor + previousEma;
 ```
 
-- `EMAc` is the currently calculated EMA - "c" stands for "current", because we are going to be using a timeframe smaller than a single day on our chart. This is the product of our calculation, but don't get too hung up on this.
+- `EMAc` is the currently calculated EMA - "c" stands for "current", because we are going to be using a time frame smaller than a single day on our chart. This is the product of our calculation, but don't get too hung up on this.
 - `value` is the current value, so in our case the price being reported by Pyth.
 - `EMAp` is the previously calculated EMA - "p" stands for "previous".
-- `weight` is a multiplier that gives less importance to older values. This can also be referred to as a "smoothing factor". To calculate the `weight` we require a timeframe, known as a **window** (this can be an arbitrary number: 10 days, 5 days, 45 minutes, etc.)
+- `weight` is a multiplier that gives less importance to older values. This can also be referred to as a "smoothing factor". To calculate the `weight` we require a time frame, known as a **window** (this can be an arbitrary number: 10 days, 5 days, 45 minutes, etc.)
 
 We need to define our **smoothing factor** or `weight`, which can be done by dividing 2 by the **window** + 1:
 

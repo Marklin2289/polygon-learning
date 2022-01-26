@@ -98,11 +98,11 @@ const Connect = () => {
               </a>{' '}
             </Title>
           }
-          style={{width: 400}}
+          style={{width: 500}}
           extra={
             <Switch
               checkedChildren={<SyncOutlined spin />}
-              unCheckedChildren={'Price feed Off'}
+              unCheckedChildren={'Pyth'}
               onChange={getPythData}
             />
           }
@@ -111,22 +111,43 @@ const Connect = () => {
           {price && fetching && (
             <>
               <Confetti
-                numberOfPieces={500}
+                numberOfPieces={150}
                 tweenDuration={1000}
                 gravity={0.05}
                 recycle={false}
               />
             </>
           )}{' '}
-          <Tooltip title="Price" placement="right">
-            <Statistic value={price} prefix={<DollarCircleFilled />} />
-          </Tooltip>{' '}
-          <Tooltip title="Confidence Interval" placement="right">
-            <Statistic value={confidence} prefix={<AimOutlined />} />
-          </Tooltip>{' '}
-          <Tooltip title="Exponent" placement="right">
-            <Statistic value={exponent} prefix={<CalculatorFilled />} />
-          </Tooltip>{' '}
+          <Statistic
+            value={price}
+            prefix={
+              <>
+                <label style={{fontSize: 14}}>
+                  <DollarCircleFilled /> Price:
+                </label>
+              </>
+            }
+          />
+          <Statistic
+            value={confidence}
+            prefix={
+              <>
+                <label style={{fontSize: 14, textAlign: 'left'}}>
+                  <AimOutlined /> Confidence:
+                </label>
+              </>
+            }
+          />
+          <Statistic
+            value={exponent}
+            prefix={
+              <>
+                <label style={{fontSize: 14}}>
+                  <CalculatorFilled /> Exponent:
+                </label>
+              </>
+            }
+          />
         </Card>
         <Space direction="horizontal" size="large"></Space>
       </Space>
