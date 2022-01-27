@@ -31,6 +31,7 @@ import {
   SOL_DECIMAL,
   USDC_DECIMAL,
   useExtendedWallet,
+  Order,
 } from '@figment-pyth/lib/wallet';
 import _ from 'lodash';
 import * as Rx from 'rxjs';
@@ -288,7 +289,7 @@ const Liquidate = () => {
             extra={
               <Switch
                 checkedChildren={<SyncOutlined spin />}
-                unCheckedChildren={'Price feed Off'}
+                unCheckedChildren={'Pyth'}
                 onChange={getPythData}
               />
             }
@@ -418,32 +419,7 @@ const Liquidate = () => {
           <Chart data={data} />
         </Card>
         <Card>
-          <Button
-            type="primary"
-            onClick={async () =>
-              await addOrder({
-                side: 'buy',
-                size: (balance.usdc_balance * 0.01) / USDC_DECIMAL,
-                fromToken: 'USDC',
-                toToken: 'SOL',
-              })
-            }
-          >
-            (testing) USDC to SOL
-          </Button>{' '}
-          <Button
-            type="primary"
-            onClick={async () =>
-              await addOrder({
-                side: 'sell',
-                size: (balance.sol_balance * 0.5) / SOL_DECIMAL,
-                fromToken: 'SOL',
-                toToken: 'USDC',
-              })
-            }
-          >
-            (testing) SOL to USDC
-          </Button>
+          <BuySellControllers addOrder={addOrder} />
           <Card title={'Yield Expectation'} size={'small'}>
             <InputNumber
               value={yieldExpectation}
@@ -528,6 +504,63 @@ const Liquidate = () => {
         </Card>
       </Space>
     </Col>
+  );
+};
+
+const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
+  addOrder,
+}) => {
+  const [buySize, setBuySize] = useState(8);
+  const [sellSize, setSellSize] = useState(0.1);
+  return (
+    <Card>
+      <Row>
+        <Col span={6}>
+          <Input.Group compact>
+            <InputNumber
+              min={0}
+              value={buySize}
+              onChange={(val) => setBuySize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={async () =>
+                await addOrder({
+                  side: 'buy',
+                  size: buySize,
+                  fromToken: 'USDC',
+                  toToken: 'SOL',
+                })
+              }
+            >
+              buy
+            </Button>
+          </Input.Group>
+        </Col>
+        <Col span={6}>
+          <Input.Group compact>
+            <InputNumber
+              min={0}
+              value={sellSize}
+              onChange={(val) => setSellSize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={async () =>
+                await addOrder({
+                  side: 'sell',
+                  size: sellSize,
+                  fromToken: 'SOL',
+                  toToken: 'USDC',
+                })
+              }
+            >
+              sell
+            </Button>
+          </Input.Group>
+        </Col>
+      </Row>
+    </Card>
   );
 };
 

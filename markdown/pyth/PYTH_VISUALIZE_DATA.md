@@ -126,6 +126,9 @@ We can add a `setData` hook to the `getPythData` function that we created in our
 This next piece of code is how we are defining our buy and sell signals based on the trend of the EMA. Pivoting on the value being entered for the `yieldExpectation`, we can make a simple calculation to emit a **buy** signal if the trend is greater than our expected yield, otherwise emit a **sell** signal. The `signalListener` is an instance of an `EventEmitter` (read more about [the `events` module](https://nodejs.org/api/events.html#events) and [EventEmitters](https://nodejs.org/api/events.html#class-eventemitter) if you need to brush up) - this essentially lets us run any functions listening to the event when it is triggered. We can just emit the event here in our code and know that the relevant functions to add the orders to the order book will be called. We'll touch on this again soon, when we're performing our token swaps.
 
 ```typescript
+// components/protocols/pyth/components/ChartMock.tsx
+
+// ...
             /**
              * Trend of the price with respect to preview EMA.
              * If the price is higher than the EMA, it is a positive trend.
@@ -144,7 +147,7 @@ This next piece of code is how we are defining our buy and sell signals based on
           }
           return [...data, newData];
         });
-    // ...
+// ...
 };
 ```
 
@@ -158,7 +161,7 @@ There is a concise [getting started guide](https://recharts.org/en-US/guide/gett
 
 The beginning of the file is where we import any other code we need, including the antd Select dropdown menu and the recharts components. This component has a single `useEffect`, which contains `data` in the dependency array - so any time the `data` changes, this component will re-render. All we're doing is making sure that the data exists by checking that the length is greater than zero, and then setting the domain for our chart data. The entire `data` object, as defined in `ChartMock.tsx` will be passed to the rechart `AreaChart` component. The rest of this component is effectively passing properties to the components and defining the style of the chart. No need to focus on this part unless you're very particular about how the information is displayed. You might want to change the colors, or even try a completely different style of chart. The recharts library is fast and quite flexible.
 
-```typescript
+```tsx
 // components/protocols/pyth/components/Chart.tsx
 
 import {Select} from 'antd';
@@ -211,7 +214,6 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
           domain={[domain.dataMin, domain.dataMax || 'auto']}
           tickCount={4}
           scale="linear"
-          // allowDataOverflow={true}
         />
         <XAxis
           stroke={'#222'}
@@ -291,20 +293,40 @@ Clicking on the price feed toggle switch will begin fetching price data from Pyt
 # 🏋️ Challenge
 
 {% hint style="tip" %}
-In `components/protocols/pyth/lib/Chart.tsx`, implement X. You must replace the instances of `undefined` with working code to accomplish this.
+In `components/protocols/pyth/lib/ChartMock.tsx`, finish the `setData` function. You must replace the instances of `undefined` with working code to accomplish this.
 {% endhint %}
 
 **Take a few minutes to figure this out**
 
 ```typescript
 //...
+setData((data) => {
+  if (data.length > window) {
+    const windowSlice = data.slice(data.length - window, data.length);
+    const sum = windowSlice.reduce((prev, curr) => prev + curr.price, 0);
+    newData.sma = sum / window;
 
+    const previousEma = newData.ema || newData.sma;
+    const currentEma =
+      (newData.price - previousEma) * smoothingFactor + previousEma;
+    newData.ema = currentEma;
+
+    const trend = newData.ema / data[data.length - 1].ema;
+    if (trend * 100 > 100 + yieldExpectation) {
+      undefined;
+    } else if (trend * 100 < 100 - yieldExpectation) {
+      undefined;
+    }
+  }
+  return [...data, newData];
+});
 //...
 ```
 
 **Need some help?** Check out these links & hints 👇
 
--
+- There's a great article on [implementing moving averages in JavaScript](https://blog.oliverjumpertz.dev/the-moving-average-simple-and-exponential-theory-math-and-implementation-in-javascript)
+- [Emitting events](https://nodejs.org/api/events.html#emitteremiteventname-args) in JavaScript is a handy skill
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
@@ -315,17 +337,45 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 ```typescript
 // solution
 //...
+setData((data) => {
+  if (data.length > window) {
+    const windowSlice = data.slice(data.length - window, data.length);
+    const sum = windowSlice.reduce((prev, curr) => prev + curr.price, 0);
+    newData.sma = sum / window;
 
+    const previousEma = newData.ema || newData.sma;
+    const currentEma =
+      (newData.price - previousEma) * smoothingFactor + previousEma;
+    newData.ema = currentEma;
+
+    const trend = newData.ema / data[data.length - 1].ema;
+    if (trend * 100 > 100 + yieldExpectation) {
+      signalListener.emit('buy');
+    } else if (trend * 100 < 100 - yieldExpectation) {
+      signalListener.emit('sell');
+    }
+  }
+  return [...data, newData];
+});
 //...
 ```
 
 **What happened in the code above?**
 
-- ***
+- We're checking that the length of the `data` array is greater than the `window`
+- We `slice` off the data we want from the array and store it in the `windowSlice` variable
+- The reducer goes through the array using the callback function on every element to arrive at the `sum`
+- We set the `sma` property of `newData` to equal the `sum` divided by the `window`
+- We can now calculate our EMA, as we have a `previousEMA` from which to start
+- Apply the EMA formula to calculate the `currentEMA`, and set the value as the `ema` property of `newData`
+- Calculating the `trend` by dividing the current EMA by a previous value from the `data` array
+- Finally, we can emit the signals related to the trend being up or down
 
 # ✅ Make sure it works
 
-Once you've completed the code and saved the file, the Next.js development server will rebuild the page. Now, turning the price feed on will populate the chart. Don't forget to turn the price feed off before moving to the next step 😄.
+Once you've completed the code and saved the file, the Next.js development server will rebuild the page. Now, turning the price feed on will populate the chart! Watch it run for a minute or two, observing the way the Pyth data is displayed. This is an un-optimized implementation of the chart and it's possible that it might feel a little choppy. There are ways to smooth it out, but they're beyond the scope of this lesson.
+
+Don't forget to turn the price feed off before moving to the next step 😄.
 
 ---
 

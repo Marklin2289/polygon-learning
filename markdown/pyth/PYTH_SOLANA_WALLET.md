@@ -127,6 +127,8 @@ Next up, we need to define some important interfaces and constants:
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
+
 interface WalletBalance {
   sol_balance: number;
   usdc_balance: number;
@@ -147,6 +149,7 @@ const ORCA_MINT_ADDRESS = 'orcarKHSqC5CDDsGbho8GKvwExejWHxTqGzXgcewB9L';
 export const SOL_DECIMAL = 10 ** 9;
 export const USDC_DECIMAL = 10 ** 6;
 export const ORCA_DECIMAL = 10 ** 6;
+// ...
 ```
 
 # 🪝 The useExtendedWallet hook
@@ -163,6 +166,7 @@ export const useExtendedWallet = (
   cluster: Cluster,
   price: number = 0,
 ) => {
+// ...
 ```
 
 `setKeyPair` works to help us generate the keypair from the input secret key, otherwise it will generate a random keypair for the mock wallet. The `useEffect` hook lets us determine what to do if there's a change in the value of `secretKey`, which would indicate a user has entered a value into the wallet component.
@@ -174,6 +178,8 @@ It is a requirement of the Jupiter SDK that we provide a keypair to be able to f
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
+const [secretKey, setSecretKey] = useLocalStorage('secretKey', undefined);
 const [keyPair, setKeyPair] = useState<Keypair>(Keypair.generate());
 useEffect(() => {
   if (secretKey) {
@@ -185,6 +191,7 @@ useEffect(() => {
     setKeyPair(temp);
   }
 }, [secretKey]);
+// ...
 ```
 
 You'll notice that `setBalance` is for setting the **mock wallet** balance in the app state based on our trades. We also supply default values so that we can reset the mock wallet.
@@ -197,6 +204,7 @@ const [balance, setBalance] = useState<WalletBalance>({
   usdc_balance: 1400 * USDC_DECIMAL,
   orca_balance: 0, // just because of the devnet deps.
 });
+// ...
 ```
 
 The `orderBook` is maintained in our app state, and keeps track of the buy and sell orders within an array.
@@ -204,7 +212,9 @@ The `orderBook` is maintained in our app state, and keeps track of the buy and s
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
 const [orderBook, setOrderbook] = useState<Order[]>([]);
+// ...
 ```
 
 The `balanceFetcher` function is a straightforward axios POST request to the Solana cluster which passes the `getBalance` method for the keypair to return the SOL balance and `getTokenAccountsByOwner` for both SPL tokens - USDC and ORCA.
@@ -212,6 +222,7 @@ The `balanceFetcher` function is a straightforward axios POST request to the Sol
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
 const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
   axios({
     url: clusterApiUrl(cluster),
@@ -266,6 +277,7 @@ Putting a call to `mutate` in a `useEffect` hook with a dependency of `cluster` 
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
 const {data, mutate} = useSWR(
   () => `/balance/${keyPair?.publicKey}`, // cache key based on the keypair.
   balanceFetcher(keyPair!, cluster),
@@ -277,6 +289,7 @@ const {data, mutate} = useSWR(
 useEffect(() => {
   mutate(); // refresh balance
 }, [cluster]);
+// ...
 ```
 
 Our next `useEffect` hook is using lodash to simplify drilling down into the data object's properties to get our balances.
@@ -284,6 +297,7 @@ Our next `useEffect` hook is using lodash to simplify drilling down into the dat
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
 useEffect(() => {
   if (data && !useMock) {
     /**
@@ -303,6 +317,7 @@ useEffect(() => {
     setBalance({sol_balance, usdc_balance, orca_balance});
   }
 }, [data]);
+// ...
 ```
 
 Next we'll set up our app state for the `jupiterSwapClient` and `orcaSwapClient`, and then add another `useEffect` hook to initialize the clients whenever there is a change in the `keypair`.
@@ -310,18 +325,19 @@ Next we'll set up our app state for the `jupiterSwapClient` and `orcaSwapClient`
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
-/**
- * The SDK allows developers to access over 10 Dexes with more than 6bn in liquidity, allowing developers to find the best route with a simple API call.
- */
-const [jupiterSwapClient, setJupiterSwapClient] =
-  useState<JupiterSwapClient | null>(null);
-
+// ...
 /**
  *  jup.ag does not support devnet yet, so we must use Orca.
  */
 const [orcaSwapClient, setOrcaSwapClient] = useState<OrcaSwapClient | null>(
   null,
 );
+
+/**
+ * The SDK allows developers to access over 10 Dexes with more than 6bn in liquidity, allowing developers to find the best route with a simple API call.
+ */
+const [jupiterSwapClient, setJupiterSwapClient] =
+  useState<JupiterSwapClient | null>(null);
 
 useEffect(() => {
   (async function _init(): Promise<void> {
@@ -334,6 +350,7 @@ useEffect(() => {
     console.log('clients initialized');
   })();
 }, [keyPair]);
+// ...
 ```
 
 Now we can define the swapClient getters. The main thing to notice here is that we're passing the RPC endpoint URL and parameters to a new `Connection` instance if there wasn't already an existing swap client in the app state.
@@ -341,6 +358,7 @@ Now we can define the swapClient getters. The main thing to notice here is that 
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
 const getOrcaSwapClient = async () => {
   if (orcaSwapClient) return orcaSwapClient;
   const _orcaSwapClient = new OrcaSwapClient(
@@ -363,6 +381,7 @@ const getJupiterSwapClient = async () => {
   setJupiterSwapClient((c) => _jupiterSwapClient);
   return _jupiterSwapClient;
 };
+// ...
 ```
 
 When we're performing mock transactions, we want to be able to differentiate between adding an actual order and adding a mock order.
@@ -370,6 +389,7 @@ When we're performing mock transactions, we want to be able to differentiate bet
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
 const addMockOrder = async (order: Order): Promise<SwapResult> => {
   const _jupiterSwapClient = await getJupiterSwapClient();
 
@@ -411,6 +431,7 @@ const addMockOrder = async (order: Order): Promise<SwapResult> => {
 
   return result;
 };
+// ...
 ```
 
 Most of what we're doing here is simply conditional, depending on if we are handling buy or sell orders & which Solana cluster we're targeting. When we add to the order book, we can then display the results. The dependency array of this `useCallback` contains `useMock`, `cluster` & `keypair`.
@@ -418,6 +439,7 @@ Most of what we're doing here is simply conditional, depending on if we are hand
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
 const addOrder = useCallback(
   async (order: Order) => {
     console.log('addOrder', useMock, order, cluster);
@@ -455,6 +477,7 @@ const addOrder = useCallback(
   },
   [useMock, cluster, keyPair],
 );
+// ...
 ```
 
 When we're resetting the mock wallet balance, we can calculate the floating point numbers to display on the fly using our predefined decimal constants. If we're resetting the balance of the live wallet, thanks to the `useSWR` hook we can just set the secret key to be `undefined`, which will trigger a refresh.
@@ -462,6 +485,7 @@ When we're resetting the mock wallet balance, we can calculate the floating poin
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
 const resetWallet = (params = {sol_balance: 10, usdc_balance: 1400}) => {
   if (useLive) {
     // setSecretKey(undefined);
@@ -473,6 +497,7 @@ const resetWallet = (params = {sol_balance: 10, usdc_balance: 1400}) => {
     });
   }
 };
+// ...
 ```
 
 Finally, our wallet utility will just return the important values:
@@ -480,6 +505,7 @@ Finally, our wallet utility will just return the important values:
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
+// ...
 return {
   balance,
   resetWallet,
@@ -518,7 +544,11 @@ useEffect(() => {
 
 **Need some help?** Check out these links & hints 👇
 
--
+- Check out the [Keypair class](https://solana-labs.github.io/solana-web3.js/classes/Keypair.html)
+- Also read up on the [PublicKey](https://solana-labs.github.io/solana-web3.js/classes/PublicKey.html)
+- Learn about [UInt8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)s
+- [bs58](https://github.com/cryptocoinjs/bs58#api) is very simple, it only has `encode` and `decode` methods
+- You may notice `const [secretKey, setSecretKey] = useLocalStorage('secretKey', undefined);` which is where the key is saved to localstorage, however the `undefined` value here is not part of the code challenge. The second parameter of `useLocalStorage` is an initial value, and we want it to be `undefined` 😃
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
@@ -532,8 +562,8 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 const [keyPair, setKeyPair] = useState<Keypair>(Keypair.generate());
 useEffect(() => {
   if (secretKey) {
-    let arr = Uint8Array.from(bs58.decode(secretKey));
-    const key = Keypair.fromSecretKey(arr);
+    let array = Uint8Array.from(bs58.decode(secretKey));
+    const key = Keypair.fromSecretKey(array);
     setKeyPair(key);
   } else {
     const temp = Keypair.generate(); // The mock uses a random keypair to be able to get real market data.
@@ -545,7 +575,10 @@ useEffect(() => {
 
 **What happened in the code above?**
 
-- ***
+- We use a state variable which defaults to generating a random keypair.
+- If the variable `secretKey` is present, we are assuming that the user has pasted in a base58 encoded private key and creating a `UInt8Array` by decoding that string with the bs58 `decode` method.
+- We then pass the array to the `fromSecretKey` method of the `Keypair` class from `@solana/web3.js`.
+- Finally, we set the state variable using `setKeyPair`.
 
 # ✅ Make sure it works
 
@@ -555,4 +588,4 @@ Once you've completed the code in `components/protocols/pyth/lib/wallet.tsx` and
 
 # 🏁 Conclusion
 
-We learned how to create a display for our account balances, with a little bit of extended functionality so that we can use it with both devnet and mainnet. We also took a look at the specifics of Solana private keys, and how to use Phantom to create a new account for testing. We then funded that account using a faucet website to get some devnet SOL.
+We learned how to create a display for our account balances, with a little bit of extended functionality so that we can use it with both devnet and mainnet. We also took a look at the specifics of Solana keypairs, and how to use Phantom to create a new account for testing. We then funded that account using a faucet website to get some devnet SOL.

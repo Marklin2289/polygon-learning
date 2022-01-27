@@ -18,7 +18,10 @@ import * as bs58 from 'bs58';
 import {ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID} from '@solana/spl-token';
 
 // Set to true for additional logging
-const debug_logging = false;
+const DEBUG_LOGGING = true;
+
+// Set to true to create Associated Token Accounts for all related SPL tokens
+const CREATE_TOKEN_ACCOUNTS = false;
 
 /**
  * Logging the Keypair object, you'll notice that the publicKey is a 32-byte UInt8Array & the secretKey is the entire 64-byte UInt8Array
@@ -90,14 +93,14 @@ export class OrcaSwapClient {
       ),
     );
     const txHash = await this.connection.sendTransaction(tx, [this.keypair]);
-    console.log(`makeATA txhash: ${transactionSolscan('devnet', txHash)}`);
+    return `${transactionSolscan('devnet', txHash)}` as String;
   }
 
-  async closeATA(tokenAcctPubkey: PublicKey) {
+  async closeATA(tokenAccount: PublicKey) {
     let tx = new Transaction().add(
       Token.createCloseAccountInstruction(
         TOKEN_PROGRAM_ID, // always TOKEN_PROGRAM_ID
-        tokenAcctPubkey, // token account which you want to close
+        tokenAccount, // token account which you want to close
         this.keypair.publicKey, // destination
         this.keypair.publicKey, // owner of token account
         [], // for multisig
@@ -107,7 +110,24 @@ export class OrcaSwapClient {
       this.keypair,
       this.keypair,
     ]);
-    console.log(`closeATA txhash: ${transactionSolscan('devnet', txHash)}`);
+    return `${transactionSolscan('devnet', txHash)}`;
+  }
+
+  async createTokenAccounts(
+    solMintPubkey: PublicKey,
+    orcaMintPubkey: PublicKey,
+    usdcMintPubkey: PublicKey,
+  ) {
+    try {
+      const solATA = await this.makeATA(solMintPubkey);
+      console.log('SOL Associated Token Account Created:', solATA);
+      const orcaATA = await this.makeATA(orcaMintPubkey);
+      console.log('ORCA Associated Token Account Created:', orcaATA);
+      const usdcATA = await this.makeATA(usdcMintPubkey);
+      console.log('USDC Associated Token Account Created:', usdcATA);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async wrapSOL(amount: number, ata: PublicKey) {
@@ -202,6 +222,7 @@ export class OrcaSwapClient {
     const orca = getOrca(this.connection, Network.DEVNET);
     const orcaSolPool = orca.getPool(OrcaPoolConfig.ORCA_SOL);
     const orcaUSDCPool = orca.getPool(OrcaPoolConfig.ORCA_USDC);
+
     const solToken = orcaSolPool.getTokenB();
     const orcaToken = orcaSolPool.getTokenA();
     const usdcToken = orcaUSDCPool.getTokenB();
@@ -210,7 +231,11 @@ export class OrcaSwapClient {
     const orcaPK = new PublicKey(orcaToken.mint.toString());
     const usdcPK = new PublicKey(usdcToken.mint.toString());
 
-    const solAmountDecimal = new Decimal(size);
+    if (CREATE_TOKEN_ACCOUNTS) {
+      this.createTokenAccounts(solPK, orcaPK, usdcPK);
+    }
+
+    const solAmountDecimal = new Decimal(0.1);
     const solAmountU64 = OrcaU64.fromDecimal(solAmountDecimal, 9);
 
     const quote = await orcaSolPool.getQuote(solToken, solAmountDecimal);
@@ -219,7 +244,7 @@ export class OrcaSwapClient {
     const usdcQuote = await orcaUSDCPool.getQuote(orcaToken, orcaAmountDecimal);
     const usdcQuoteMinAmount = usdcQuote.getMinOutputAmount();
 
-    if (debug_logging) {
+    if (DEBUG_LOGGING) {
       let ownedTokenAccts = await this.connection.getParsedTokenAccountsByOwner(
         this.keypair.publicKey,
         {programId: TOKEN_PROGRAM_ID},
@@ -259,14 +284,6 @@ export class OrcaSwapClient {
         // console.log('Removed ATA:', removeATA);
       }
 
-      // If we need to create Associated Token Accounts:
-      // const solATA = await this.makeATA(solPK);
-      // console.log('SOL Associated Token Account Created:', solATA);
-      // const orcaATA = await this.makeATA(orcaPK);
-      // console.log('ORCA Associated Token Account Created:', orcaATA);
-      // const usdcATA = await this.makeATA(usdcPK);
-      // console.log('USDC Associated Token Account Created:', usdcATA);
-
       const solAssocTknAcct = new PublicKey(
         'A3DCHaR9fYy4b1c8va7nBSgGJNoHN8XYQidvGAddz5WN',
       );
@@ -302,11 +319,11 @@ export class OrcaSwapClient {
     const swapPayload = await orcaSolPool.swap(
       this.keypair,
       solToken,
-      solAmountU64,
+      solAmountDecimal,
       orcaQuoteMinAmount,
     );
 
-    if (debug_logging) {
+    if (DEBUG_LOGGING) {
       console.log('swapPayload:', swapPayload);
 
       let j = 0;

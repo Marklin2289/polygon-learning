@@ -6,15 +6,12 @@ If you recall, at the beginning of the pathway we laid out the various topics we
 
 - We have a component that can toggle our Pyth price feed on and off as needed to start and stop the bot.
 - We've got an account display, the "Wallet" component which shows us how many tokens the bot has access to. We can supply a private key to give the bot complete authority to swap these tokens.
-- There's a beautiful Chart component to display the price data so that we know which way the market is moving. Knowledge is power!
+- There's a Chart component to display the price data, so that we know which way the market is moving. Knowledge is power!
 - We've got an order book and a way to generate token swap transactions based on the Exponential Moving Average and execute them on a DEX.
 
-The file `components/protocols/pyth/components/Liquidate.tsx` is being rendered on the right side of the page. You should be familiar with the imports by now. We're bringing in the `pythConnection` that we worked on in the first step to fetch our price data from the Solana cluster. We'll be using the `price` state variable, and the `yieldExpectation`. Each `useEffect` has comments in the code explaining what they're doing.
+The file `components/protocols/pyth/components/Liquidate.tsx` is being rendered on the right side of the page. You should be familiar with the imports by now. We're bringing in the `pythConnection` that we worked on in the first step to fetch our price data from the Solana cluster. We'll be using the `price` state variable, and the `yieldExpectation`. Each `useEffect` in this component is commented, explaining what they're doing.
 
 ---
-
-// 4WoxErVFHZSaiTyDjUhqd6oWRL7gHZJd8ozvWWKZY9EZEtrqxCiD8CFvak7QRCYpuZHLU8FTGALB9y5yenx8rEq3
-// 2AHRd3GuVCdj6twaQb6GrQPPMwx4A9wBBqQX3igK1KFKn79uguSJxPANq571g16PSz2PRQSTvj2eDkqUiVfjDVbw
 
 # 🏋️ Challenge
 

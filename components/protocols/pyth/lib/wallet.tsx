@@ -38,7 +38,6 @@ export const useExtendedWallet = (
   price: number = 0,
 ) => {
   const [secretKey, setSecretKey] = useLocalStorage('secretKey', undefined);
-
   const [keyPair, setKeyPair] = useState<Keypair>(Keypair.generate());
   useEffect(() => {
     if (secretKey) {
@@ -60,7 +59,7 @@ export const useExtendedWallet = (
   const [orderBook, setOrderbook] = useState<Order[]>([]);
 
   const {data, mutate} = useSWR(
-    () => `/balance/${keyPair?.publicKey}`, // Cache key base on the keypair.
+    () => `/balance/${keyPair?.publicKey}`, // Cache key based on the keypair.
     balanceFetcher(keyPair!, cluster),
     {
       refreshInterval: 5000,
@@ -92,17 +91,17 @@ export const useExtendedWallet = (
   }, [data]);
 
   /**
-   * The Jupiter SDK gives access to 10+ DEXes with more than 6bn in liquidity, allowing developers to find the best swap route with a simple API call.
-   */
-  const [jupiterSwapClient, setJupiterSwapClient] =
-    useState<JupiterSwapClient | null>(null);
-
-  /**
    *  Since jup.ag does not support devnet yet, we'll use Orca for devnet swaps.
    */
   const [orcaSwapClient, setOrcaSwapClient] = useState<OrcaSwapClient | null>(
     null,
   );
+
+  /**
+   * The Jupiter SDK gives access to 10+ DEXes with more than 6bn in liquidity, allowing developers to find the best swap route with a simple API call.
+   */
+  const [jupiterSwapClient, setJupiterSwapClient] =
+    useState<JupiterSwapClient | null>(null);
 
   // useEffect(() => {
   //   (async function _init(): Promise<void> {
