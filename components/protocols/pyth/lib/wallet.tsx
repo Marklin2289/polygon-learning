@@ -183,7 +183,6 @@ export const useExtendedWallet = (
       setBalance({
         sol_balance: params.sol_balance * SOL_DECIMAL,
         usdc_balance: params.usdc_balance * USDC_DECIMAL,
-        orca_balance: 0,
       });
     }
   };
@@ -217,10 +216,7 @@ const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
         params: [
           keyPair?.publicKey.toBase58(),
           {
-            mint:
-              cluster === 'mainnet-beta'
-                ? USDC_MINT_ADDRESS
-                : 'EmXq3Ni9gfudTiyNKzzYvpnQqnJEMRw2ttnVXoJXjLo1', // Orca devnet pool USDC equivalent token mint address.
+            mint: USDC_MINT_ADDRESS,
           },
           {
             encoding: 'jsonParsed',

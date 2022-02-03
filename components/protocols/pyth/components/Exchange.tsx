@@ -15,25 +15,18 @@ import {
   Tooltip,
 } from 'antd';
 import {useGlobalState} from 'context';
-import {
-  SyncOutlined,
-  DollarCircleFilled,
-  ArrowRightOutlined,
-} from '@ant-design/icons';
+import {DollarCircleFilled, ArrowRightOutlined} from '@ant-design/icons';
 import React, {useEffect, useState} from 'react';
 import {Cluster, clusterApiUrl, Connection} from '@solana/web3.js';
 import {PythConnection, getPythProgramKeyForCluster} from '@pythnetwork/client';
-import {Chart} from './Chart';
 import {EventEmitter} from 'events';
 import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
 import {
-  ORCA_DECIMAL,
   Order,
   SOL_DECIMAL,
   USDC_DECIMAL,
   useExtendedWallet,
 } from '@figment-pyth/lib/wallet';
-import _ from 'lodash';
 import * as Rx from 'rxjs';
 
 const connection = new Connection(
@@ -336,15 +329,6 @@ const Exchange = () => {
                   title={'USDC'}
                 />
               </Col>
-
-              {useLive ? (
-                <Col span={12}>
-                  <Statistic
-                    value={balance?.orca_balance / ORCA_DECIMAL}
-                    title={'ORCA'}
-                  />
-                </Col>
-              ) : null}
 
               <Col span={12}>
                 <Statistic

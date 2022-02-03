@@ -1,16 +1,4 @@
-import {SOL_DECIMAL, USDC_DECIMAL} from './wallet';
-import {accountSolscan, transactionSolscan} from './index';
-import {
-  Cluster,
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  SystemProgram,
-  TransactionInstruction,
-  LAMPORTS_PER_SOL,
-} from '@solana/web3.js';
-import {Token} from '@solana/spl-token';
+import {Cluster, Connection, Keypair, PublicKey} from '@solana/web3.js';
 import {Jupiter, RouteInfo, TOKEN_LIST_URL} from '@jup-ag/core';
 
 /**
@@ -66,8 +54,8 @@ export class JupiterSwapClient {
 
   constructor(
     jupiter: Jupiter,
-    public readonly tokenA: Token,
-    public readonly tokenB: Token,
+    public readonly tokenA: TokenI,
+    public readonly tokenB: TokenI,
     public readonly keypair: Keypair,
   ) {
     this.jupiter = jupiter;
@@ -81,7 +69,9 @@ export class JupiterSwapClient {
     tokenBMintAddress: String, // token to sell
   ) {
     const jupiter = await Jupiter.load({connection, cluster, user: keypair});
-    const tokens: Token[] = await (await fetch(TOKEN_LIST_URL[cluster])).json(); // Fetch token list from Jupiter API
+    const tokens: TokenI[] = await (
+      await fetch(TOKEN_LIST_URL[cluster])
+    ).json(); // Fetch token list from Jupiter API
     const inputToken = tokens.find((t) => t.address == tokenAMintAddress); // Buy token
     const outputToken = tokens.find((t) => t.address == tokenBMintAddress); // Sell token
     console.log('Input token:', inputToken);
@@ -101,8 +91,8 @@ export class JupiterSwapClient {
     inputAmount,
     slippage,
   }: {
-    inputToken?: Token;
-    outputToken?: Token;
+    inputToken?: TokenI;
+    outputToken?: TokenI;
     inputAmount: number;
     slippage: number;
   }) {

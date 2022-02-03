@@ -1,4 +1,4 @@
-import {Col, Space, Switch, message, Statistic, Card, notification} from 'antd';
+import {Col, Space, Switch, message, Statistic, Card} from 'antd';
 import {useGlobalState} from 'context';
 import {SyncOutlined} from '@ant-design/icons';
 import React, {useEffect, useState} from 'react';
@@ -9,8 +9,6 @@ import {Chart} from './Chart';
 import {EventEmitter} from 'events';
 import {PYTH_NETWORKS} from 'types/index';
 import {useExtendedWallet} from '@figment-pyth/lib/wallet';
-import _ from 'lodash';
-import * as Rx from 'rxjs';
 
 const connection = new Connection(clusterApiUrl(PYTH_NETWORKS.DEVNET));
 const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);

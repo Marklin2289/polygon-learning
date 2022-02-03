@@ -155,15 +155,6 @@ const Wallet = () => {
                   />
                 </Col>
 
-                {/* {useLive ? (
-                  <Col span={12}>
-                    <Statistic
-                      value={balance?.orca_balance / ORCA_DECIMAL}
-                      title={'ORCA'}
-                    />
-                  </Col>
-                ) : null}
- */}
                 <Col span={12}>
                   <Statistic
                     value={

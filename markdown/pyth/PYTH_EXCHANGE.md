@@ -85,7 +85,6 @@ We went over imports earlier in the pathway, the only new one here is the Jupite
 
 import {Cluster, Connection, Keypair, PublicKey} from '@solana/web3.js';
 import {Jupiter, RouteInfo, TOKEN_LIST_URL} from '@jup-ag/core';
-import Decimal from 'decimal.js';
 ```
 
 # 🏦 Associated Token Accounts

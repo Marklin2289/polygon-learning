@@ -219,10 +219,7 @@ const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
         params: [
           keyPair?.publicKey.toBase58(),
           {
-            mint:
-              cluster === 'mainnet-beta'
-                ? USDC_MINT_ADDRESS
-                : 'EmXq3Ni9gfudTiyNKzzYvpnQqnJEMRw2ttnVXoJXjLo1', // Orca devnet pool USDC equivalent token mint address.
+            mint: USDC_MINT_ADDRESS,
           },
           {
             encoding: 'jsonParsed',
@@ -272,12 +269,7 @@ useEffect(() => {
       'data[1].result.value[0]account.data.parsed.info.tokenAmount.amount',
       0,
     );
-    const orca_balance = _.get(
-      data,
-      'data[2].result.value[0]account.data.parsed.info.tokenAmount.amount',
-      0,
-    );
-    setBalance({sol_balance, usdc_balance, orca_balance});
+    setBalance({sol_balance, usdc_balance});
   }
 }, [data]);
 // ...

@@ -27,7 +27,6 @@ import {Chart} from './Chart';
 import {EventEmitter} from 'events';
 import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
 import {
-  ORCA_DECIMAL,
   SOL_DECIMAL,
   USDC_DECIMAL,
   useExtendedWallet,
@@ -346,15 +345,6 @@ const Liquidate = () => {
                   title={'USDC'}
                 />
               </Col>
-
-              {useLive ? (
-                <Col span={12}>
-                  <Statistic
-                    value={balance?.orca_balance / ORCA_DECIMAL}
-                    title={'ORCA'}
-                  />
-                </Col>
-              ) : null}
 
               <Col span={12}>
                 <Statistic
