@@ -390,10 +390,7 @@ const Exchange = () => {
           </Card>
         </Space>
         <Card>
-          <Chart data={data} />
-        </Card>
-        <BuySellControllers addOrder={addOrder} />
-        <Card>
+          <BuySellControllers addOrder={addOrder} />
           <Statistic value={orderBook.length} title={'Number of Operations'} />
           <Table
             dataSource={orderBook}
@@ -426,23 +423,6 @@ const Exchange = () => {
               },
               {
                 title: 'out Amount',
-                dataIndex: 'outAmount',
-                key: 'outAmount',
-                render: (val, order) => {
-                  if (order.side === 'buy') {
-                    return <Tag color="red">{val / SOL_DECIMAL}</Tag>;
-                  } else {
-                    return <Tag color="green">{val / USDC_DECIMAL}</Tag>;
-                  }
-                },
-              },
-              {
-                title: 'Out Token',
-                dataIndex: 'toToken',
-                key: 'toToken',
-              },
-              {
-                title: 'in Amount',
                 dataIndex: 'inAmount',
                 key: 'inAmount',
                 render: (val, order) => {
@@ -454,9 +434,26 @@ const Exchange = () => {
                 },
               },
               {
-                title: 'In Token',
+                title: 'Out Token',
                 dataIndex: 'fromToken',
                 key: 'fromToken',
+              },
+              {
+                title: 'in Amount',
+                dataIndex: 'outAmount',
+                key: 'outAmount',
+                render: (val, order) => {
+                  if (order.side === 'buy') {
+                    return <Tag color="red">{val / SOL_DECIMAL}</Tag>;
+                  } else {
+                    return <Tag color="green">{val / USDC_DECIMAL}</Tag>;
+                  }
+                },
+              },
+              {
+                title: 'In Token',
+                dataIndex: 'toToken',
+                key: 'toToken',
               },
             ]}
           ></Table>
@@ -472,29 +469,8 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
   const [buySize, setBuySize] = useState(8);
   const [sellSize, setSellSize] = useState(0.1);
   return (
-    <Card>
+    <Card bordered={false}>
       <Row>
-        <Col span={6}>
-          <Input.Group compact>
-            <InputNumber
-              min={0}
-              value={buySize}
-              onChange={(val) => setBuySize(val)}
-            />
-            <Button
-              onClick={async () =>
-                await addOrder({
-                  side: 'buy',
-                  size: buySize,
-                  fromToken: 'USDC',
-                  toToken: 'SOL',
-                })
-              }
-            >
-              buy
-            </Button>
-          </Input.Group>
-        </Col>
         <Col span={6}>
           <Input.Group compact>
             <InputNumber
@@ -503,6 +479,7 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
               onChange={(val) => setSellSize(val)}
             />
             <Button
+              type="primary"
               onClick={async () =>
                 await addOrder({
                   side: 'sell',
@@ -513,6 +490,28 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
               }
             >
               sell
+            </Button>
+          </Input.Group>
+        </Col>
+        <Col span={6}>
+          <Input.Group compact>
+            <InputNumber
+              min={0}
+              value={buySize}
+              onChange={(val) => setBuySize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={async () =>
+                await addOrder({
+                  side: 'buy',
+                  size: buySize,
+                  fromToken: 'USDC',
+                  toToken: 'SOL',
+                })
+              }
+            >
+              buy
             </Button>
           </Input.Group>
         </Col>

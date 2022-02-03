@@ -2,17 +2,13 @@ To better understand and derive value from the Pyth price data for a given produ
 
 This helps to illustrate the price data coming from Pyth and also sets the stage for us to be able to to perform buy/sell operations using a DEX. We'll be calculating our buy and sell signals based on the Exponential Moving Average (EMA) which is a naive and un-opinionated method of achieving yield. There are more complex ways of deciding when and how much to trade, which are all beyond the scope of this pathway. Using the EMA, as long as the price trends upwards for the amount of time you are trading, you would expect to see a positive yield. Since this is an exercise in buying low and selling as the price rises, it's simple enough to avoid spending over your target by stopping the liquidation bot.
 
-{% hint style="info" %}
-We need to calculate the Simple Moving Average (SMA), to kickstart the EMA with a point of reference. This is why you will not see the green line representing the EMA on the chart right away when starting it up.
-{% endhint %}
-
 Slightly separate topics, though worth considering if you wish to build upon the basics of this Pathway: What is a novel and interesting way to calculate when to buy and when to sell? Are there ways in which you might safeguard against a particularly wide confidence interval, or even a sudden shock to the market?
 
 ---
 
 # 👀 Charting Pyth data
 
-The component being rendered on the right is defined in `components/protocols/pyth/components/ChartMock.tsx`, which contains both the price feed component from the Connect step and the Chart component defined in `components/protocols/pyth/components/Chart.tsx`. Turning on the price feed will populate the chart, by passing the data to the Chart component. You can probably tell where we're going with this 😉
+The **page** being rendered on the right is defined in `components/protocols/pyth/components/ChartMock.tsx`, which contains both the price feed component from the Connect step and the Chart component defined in `components/protocols/pyth/components/Chart.tsx`. Turning on the price feed will populate the chart, by passing the data to the Chart component. You can probably tell where we're going with this 😉
 
 ```jsx
 // components/protocols/pyth/components/ChartMock.tsx
@@ -27,6 +23,10 @@ The component being rendered on the right is defined in `components/protocols/py
 
 # 📈 Moving Averages
 
+{% hint style="info" %}
+We need to calculate the Simple Moving Average (SMA), to kickstart the EMA with a point of reference. This is why you will not see the green line representing the EMA on the chart right away when starting it up.
+{% endhint %}
+
 Because what we are building is effectively a financial application, we want to display the moving average we'll be using to determine our buy & sell signals for the tokens we want to trade.
 
 For the hard-boiled engineers and the truly devoted learners, there is a dry explanation of Exponential Moving Average (EMA) calculations available on [Wikipedia](https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average) but this is likely to be _very_ confusing to most readers. Luckily, there is a much simpler way to visualize this formula and what it will produce!
@@ -35,15 +35,6 @@ The EMA formula can be expressed as:
 
 ![EMA Formula](ema_formula.png)
 
-```typescript
-// solution
-// * text example for accessibility *
-// components/protocols/pyth/components/Chart.tsx
-
-// Formula: EMAc = (value - EMAp) * weight + EMAp
-const ema = (newData.price - previousEma) * smoothingFactor + previousEma;
-```
-
 - `EMAc` is the currently calculated EMA - "c" stands for "current", because we are going to be using a time frame smaller than a single day on our chart. This is the product of our calculation, but don't get too hung up on this.
 - `value` is the current value, so in our case the price being reported by Pyth.
 - `EMAp` is the previously calculated EMA - "p" stands for "previous".
@@ -51,17 +42,21 @@ const ema = (newData.price - previousEma) * smoothingFactor + previousEma;
 
 We need to define our **smoothing factor** or `weight`, which can be done by dividing 2 by the **window** + 1:
 
-```text
-// solution
+![Weight Formula](weight_calculation.png)
 
+```typescript
+// solution
 // * text example for accessibility *
 
            2
 weight = -----
          w + 1
-```
 
-![Weight Formula](weight_calculation.png)
+// components/protocols/pyth/components/Chart.tsx
+
+// Formula: EMAc = (value - EMAp) * weight + EMAp
+const ema = (newData.price - previousEma) * smoothingFactor + previousEma;
+```
 
 ![EMA Chart](ema_chart.png)
 
@@ -293,7 +288,7 @@ Clicking on the price feed toggle switch will begin fetching price data from Pyt
 # 🏋️ Challenge
 
 {% hint style="tip" %}
-In `components/protocols/pyth/lib/ChartMock.tsx`, finish the `setData` function. You must replace the instances of `undefined` with working code to accomplish this.
+In `components/protocols/pyth/lib/ChartMock.tsx`, finish the `setData` function by implementing the EMA formula in the `currentEma` and emitting the proper events for the `trend` conditions. You must replace the instances of `undefined` with working code to accomplish this.
 {% endhint %}
 
 **Take a few minutes to figure this out**
@@ -307,8 +302,7 @@ setData((data) => {
     newData.sma = sum / window;
 
     const previousEma = newData.ema || newData.sma;
-    const currentEma =
-      (newData.price - previousEma) * smoothingFactor + previousEma;
+    const currentEma = undefined;
     newData.ema = currentEma;
 
     const trend = newData.ema / data[data.length - 1].ema;
@@ -369,7 +363,7 @@ setData((data) => {
 - We can now calculate our EMA, as we have a `previousEMA` from which to start
 - Apply the EMA formula to calculate the `currentEMA`, and set the value as the `ema` property of `newData`
 - Calculating the `trend` by dividing the current EMA by a previous value from the `data` array
-- Finally, we can emit the signals related to the trend being up or down
+- Finally, we can emit the signals related to the trend being up or down with `signalListener.emit()`
 
 # ✅ Make sure it works
 
@@ -381,4 +375,4 @@ Don't forget to turn the price feed off before moving to the next step 😄.
 
 # 🏁 Conclusion
 
-We looked at how to display Pyth price data using the recharts components. We briefly touched on how to calculate an Exponential Moving Average and how that informs the buy and sell signals for our liquidation bot. We are able to see how the price data is reflected on the chart, along with the plotted lines for the Simple Moving Average and the Exponential Moving Average.
+We looked at how to display Pyth price data using the recharts components. We touched on how to calculate an Exponential moving average and how that informs the buy and sell signals for our liquidation bot. We are able to see how the price data is reflected on the chart, along with the plotted lines for the Simple moving average and the Exponential moving average.

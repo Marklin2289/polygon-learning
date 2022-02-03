@@ -1,13 +1,4 @@
-import {
-  Col,
-  Space,
-  Typography,
-  Switch,
-  message,
-  Statistic,
-  Card,
-  Tooltip,
-} from 'antd';
+import {Col, Space, Typography, Switch, message, Statistic, Card} from 'antd';
 import {useGlobalState} from 'context';
 import {SyncOutlined} from '@ant-design/icons';
 import {useEffect, useState} from 'react';

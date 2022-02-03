@@ -4,18 +4,22 @@ We recommend completing both the [Solana 101 pathway](https://learn.figment.io/p
 
 # 🦺 Important information for your safety
 
-During this Pathway, we will provide you with an opportunity to use the Solana [mainnet-beta cluster](https://docs.solana.com/clusters#mainnet-beta) (hereafter referred to as "mainnet") to perform token swaps with [Jupiter](https://jup.ag), a liquidity aggregator for Solana - which means that **actual funds may be used**.
+During this Pathway, we will provide you with an opportunity to use the Solana [mainnet-beta cluster](https://docs.solana.com/clusters#mainnet-beta) (hereafter referred to as "mainnet") to perform token swaps with [Jupiter](https://jup.ag), a liquidity aggregator for Solana - which means that **actual funds may be used**. This is **not** a requirement for completing the Pathway.
 
-This is **not** a requirement for completing the Pathway & we have made sure to _clearly mark the difference_ between using the **devnet cluster** and the **mainnet cluster**. Be aware that during step 4 of the Pathway ("Wallet implementation"), we will explain how to use the private keys of Solana keypairs. You will be instructed to input the private key of a **devnet only** wallet, which we will walk you through setting up. Solana keypairs can be created using the Solana CLI, or with the JavaScript API, or even by using a browser extension wallet such as [Phantom](https://phantom.app).
+Be aware that during step 4 of the Pathway ("Wallet implementation"), we will explain how to identify & use the private keys of Solana keypairs. Solana keypairs can be created using the Solana CLI, or with the JavaScript API, or even by using a browser extension wallet such as [Phantom](https://phantom.app).
 
 You should **never** share your private keys with anyone. The simplest and most secure approach to this issue is to create an account entirely for the purpose of the following tutorials. Before proceeding, it is extremely important for you to understand that **if you provide the private key of a Solana account containing mainnet SOL to the wallet component in the Pathway, you are _potentially_ risking the full amount of SOL in that account**.
 
 There is a wallet component used in several steps of the Pathway which has a toggle switch between "mock" and "live". When the toggle is set to "live", you will be able to provide a [private key](https://solana-labs.github.io/solana-web3.js/classes/Keypair.html). This private key is then stored in the local storage of your web browser, so that you do not need to enter it multiple times. If you are not already familiar with it, read more about [web browser local storage](https://blog.logrocket.com/localstorage-javascript-complete-guide/) to understand where and how this data is kept.
 
+# ♻️ A word on swaps
+
+Because we are working with some fairly new technology, there are some gaps in functionality between the Solana devnet and mainnet. Unfortunately, there are not any simple ways to perform token swaps on devnet at the time of this writing.
+
 Note that in order to perform _any_ swaps on Solana mainnet using this project, you must:
 
 - Own a funded account on mainnet containing an amount of SOL and the USDC SPL token
-- Be on Step 6, "Token swaps on a DEX" or Step 7, "Liquidation bot implementation"
+- Be on Step 7, "Liquidation bot implementation"
 - Toggle the wallet component from "mock" to "live", then switch it from devnet to mainnet which will present you with an alert warning you that you're going live on mainnet with real economic exposure
 - Copy and paste the private key of your funded account into the textinput of the **live** wallet component
 

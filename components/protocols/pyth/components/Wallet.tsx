@@ -14,11 +14,9 @@ import {useGlobalState} from 'context';
 import {DollarCircleFilled, ArrowRightOutlined} from '@ant-design/icons';
 import React, {useEffect, useState} from 'react';
 import {Cluster, clusterApiUrl, Connection} from '@solana/web3.js';
-import {PythConnection, getPythProgramKeyForCluster} from '@pythnetwork/client';
 import {EventEmitter} from 'events';
 import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
 import {
-  ORCA_DECIMAL,
   SOL_DECIMAL,
   USDC_DECIMAL,
   useExtendedWallet,
@@ -48,30 +46,19 @@ const Wallet = () => {
   const [worth, setWorth] = useState({initial: 0, current: 0});
 
   useEffect(() => {
-    const btn = (
-      <Button
-        style={{backgroundColor: '#000'}}
-        type="primary"
-        size="small"
-        onClick={() => notification.close(key)}
-      >
-        I acknowledge the risks and want to proceed
-      </Button>
-    );
     const key = `open${Date.now()}`;
     if (cluster === SOLANA_NETWORKS.MAINNET) {
       notification.warn({
         message: 'WARNING!',
         description: 'Swaps on mainnet-beta use real funds ⚠️',
-        btn,
         key,
-        duration: 0,
+        duration: 5,
       });
     } else if (cluster === SOLANA_NETWORKS.DEVNET) {
       notification.info({
         message: 'On devnet ✅',
         description: 'Swaps on devnet have no actual value!',
-        duration: 3,
+        duration: 2,
       });
     }
   }, [cluster]);
@@ -126,7 +113,7 @@ const Wallet = () => {
                       onChange={(val) =>
                         setCluster(val ? 'mainnet-beta' : 'devnet')
                       }
-                      checkedChildren={'mainnet'}
+                      checkedChildren={'mainnet-beta'}
                       unCheckedChildren={'devnet'}
                     />
                   ) : (
@@ -168,7 +155,7 @@ const Wallet = () => {
                   />
                 </Col>
 
-                {useLive ? (
+                {/* {useLive ? (
                   <Col span={12}>
                     <Statistic
                       value={balance?.orca_balance / ORCA_DECIMAL}
@@ -176,14 +163,17 @@ const Wallet = () => {
                     />
                   </Col>
                 ) : null}
-
+ */}
                 <Col span={12}>
                   <Statistic
                     value={
                       price &&
-                      (balance?.sol_balance / SOL_DECIMAL) * price! +
+                      (
+                        (balance?.sol_balance / SOL_DECIMAL) * price! +
                         balance.usdc_balance / USDC_DECIMAL
+                      ).toFixed(2)
                     }
+                    prefix={'$'}
                     title={'TOTAL WORTH'}
                   />
                 </Col>
@@ -204,15 +194,18 @@ const Wallet = () => {
                 {useLive ? (
                   <>
                     <Row>
-                      <label htmlFor="secretKey" style={{paddingTop: 5}}>
-                        Private Key <ArrowRightOutlined /> &nbsp;
-                      </label>
-                      <Input
+                      <Input.Password
                         id="secretKey"
                         type="password"
                         onChange={(e) => setSecretKey(e.target.value)}
-                        placeholder="Paste your test wallet Solana private key here"
-                        style={{width: 330, verticalAlign: 'middle'}}
+                        placeholder="Paste your test wallet private key here"
+                        style={{width: 450, verticalAlign: 'middle'}}
+                        allowClear
+                        addonBefore={
+                          <>
+                            Private Key <ArrowRightOutlined />
+                          </>
+                        }
                       />
                     </Row>
                   </>

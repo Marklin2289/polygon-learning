@@ -91,12 +91,12 @@ const Liquidate = () => {
         description: 'Swaps on mainnet-beta use real funds ⚠️',
         btn,
         key,
-        duration: 0,
+        duration: 5,
       });
     } else if (cluster === SOLANA_NETWORKS.DEVNET) {
       notification.info({
         message: 'On devnet ✅',
-        description: 'Swaps on devnet have no actual value!',
+        description: 'Swaps on devnet are not functional!',
         duration: 3,
       });
     }
@@ -274,29 +274,13 @@ const Liquidate = () => {
     }
   };
 
-  if (orderBook.length > 0) {
-    console.log(orderBook);
-  }
+  // if (orderBook.length > 0) {
+  //   console.log(orderBook);
+  // }
 
   return (
     <Col>
       <Space direction="vertical" size="large">
-        <Space direction="horizontal">
-          <Card
-            size="small"
-            title={symbol}
-            style={{width: 400}}
-            extra={
-              <Switch
-                checkedChildren={<SyncOutlined spin />}
-                unCheckedChildren={'Pyth'}
-                onChange={getPythData}
-              />
-            }
-          >
-            <Statistic value={price} prefix={<DollarCircleFilled />} />{' '}
-          </Card>
-        </Space>
         <Space direction="horizontal" size="large">
           <Card
             style={{width: 550}}
@@ -376,9 +360,12 @@ const Liquidate = () => {
                 <Statistic
                   value={
                     price &&
-                    (balance?.sol_balance / SOL_DECIMAL) * price! +
+                    (
+                      (balance?.sol_balance / SOL_DECIMAL) * price! +
                       balance.usdc_balance / USDC_DECIMAL
+                    ).toFixed(2)
                   }
+                  prefix={'$'}
                   title={'TOTAL WORTH'}
                 />
               </Col>
@@ -399,15 +386,18 @@ const Liquidate = () => {
               {useLive ? (
                 <>
                   <Row>
-                    <label htmlFor="secretKey" style={{paddingTop: 5}}>
-                      Private Key <ArrowRightOutlined /> &nbsp;
-                    </label>
-                    <Input
+                    <Input.Password
                       id="secretKey"
                       type="password"
                       onChange={(e) => setSecretKey(e.target.value)}
-                      placeholder="Paste your test wallet Solana private key here"
-                      style={{width: 330, verticalAlign: 'middle'}}
+                      placeholder="Paste your test wallet private key here"
+                      style={{width: 450, verticalAlign: 'middle'}}
+                      allowClear
+                      addonBefore={
+                        <>
+                          Private Key <ArrowRightOutlined />
+                        </>
+                      }
                     />
                   </Row>
                 </>
@@ -416,11 +406,18 @@ const Liquidate = () => {
           </Card>
         </Space>
         <Card>
+          <Switch
+            checkedChildren={<SyncOutlined spin />}
+            unCheckedChildren={'Pyth'}
+            onChange={getPythData}
+          />
+          <br />
+          <br />
           <Chart data={data} />
         </Card>
         <Card>
           <BuySellControllers addOrder={addOrder} />
-          <Card title={'Yield Expectation'} size={'small'}>
+          <Card title={'Yield Expectation'} size={'small'} bordered={false}>
             <InputNumber
               value={yieldExpectation}
               onChange={(e) => setYield(e)}
@@ -430,8 +427,13 @@ const Liquidate = () => {
               value={orderSizeUSDC}
               onChange={(e) => setOrderSizeUSDC(e)}
               prefix="USDC"
+              placeholder="Amount of USDC to buy"
+              style={{width: 200}}
             />
           </Card>
+          <Space direction="vertical" size="large">
+            <br />
+          </Space>
           <Statistic
             value={orderBook.length}
             title={'Order Book Total Transactions'}
@@ -453,7 +455,7 @@ const Liquidate = () => {
                           target={'_blank'}
                           rel="noreferrer"
                         >
-                          {txId.substring(-1, 5)}
+                          {txId?.substring(-1, 5)}
                         </a>
                       ))}
                     </>
@@ -467,23 +469,6 @@ const Liquidate = () => {
               },
               {
                 title: 'out Amount',
-                dataIndex: 'outAmount',
-                key: 'outAmount',
-                render: (val, order) => {
-                  if (order.side === 'buy') {
-                    return <Tag color="red">{val / SOL_DECIMAL}</Tag>;
-                  } else {
-                    return <Tag color="green">{val / USDC_DECIMAL}</Tag>;
-                  }
-                },
-              },
-              {
-                title: 'Out Token',
-                dataIndex: 'toToken',
-                key: 'toToken',
-              },
-              {
-                title: 'in Amount',
                 dataIndex: 'inAmount',
                 key: 'inAmount',
                 render: (val, order) => {
@@ -495,9 +480,26 @@ const Liquidate = () => {
                 },
               },
               {
-                title: 'In Token',
+                title: 'Out Token',
                 dataIndex: 'fromToken',
                 key: 'fromToken',
+              },
+              {
+                title: 'in Amount',
+                dataIndex: 'outAmount',
+                key: 'outAmount',
+                render: (val, order) => {
+                  if (order.side === 'buy') {
+                    return <Tag color="red">{val / SOL_DECIMAL}</Tag>;
+                  } else {
+                    return <Tag color="green">{val / USDC_DECIMAL}</Tag>;
+                  }
+                },
+              },
+              {
+                title: 'In Token',
+                dataIndex: 'toToken',
+                key: 'toToken',
               },
             ]}
           ></Table>
@@ -513,30 +515,8 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
   const [buySize, setBuySize] = useState(8);
   const [sellSize, setSellSize] = useState(0.1);
   return (
-    <Card>
+    <Card bordered={false}>
       <Row>
-        <Col span={6}>
-          <Input.Group compact>
-            <InputNumber
-              min={0}
-              value={buySize}
-              onChange={(val) => setBuySize(val)}
-            />
-            <Button
-              type="primary"
-              onClick={async () =>
-                await addOrder({
-                  side: 'buy',
-                  size: buySize,
-                  fromToken: 'USDC',
-                  toToken: 'SOL',
-                })
-              }
-            >
-              buy
-            </Button>
-          </Input.Group>
-        </Col>
         <Col span={6}>
           <Input.Group compact>
             <InputNumber
@@ -556,6 +536,28 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
               }
             >
               sell
+            </Button>
+          </Input.Group>
+        </Col>
+        <Col span={6}>
+          <Input.Group compact>
+            <InputNumber
+              min={0}
+              value={buySize}
+              onChange={(val) => setBuySize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={async () =>
+                await addOrder({
+                  side: 'buy',
+                  size: buySize,
+                  fromToken: 'USDC',
+                  toToken: 'SOL',
+                })
+              }
+            >
+              buy
             </Button>
           </Input.Group>
         </Col>

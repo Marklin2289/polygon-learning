@@ -1,4 +1,4 @@
-Now that we are able to get Pyth price data, we need to take a detour away from Pyth for a moment to get our account interface figured out. The liquidation bot is going to need some tokens to trade on our behalf! We want to be able to leverage that data and interact with a DEX to swap tokens. We're going to look at how to implement a display of our token balances on the frontend, so that we can see the changes as the liquidation bot is performing the swaps. We have two different displays to consider: The **mock wallet** which is not connected to Solana, to be used for testing purposes. And the **live wallet** that pulls data from an existing, funded account on Solana to be used on either devnet or mainnet.
+Now that we are able to get Pyth price data, we need to take a detour away from Pyth for a moment to get our account interface figured out. The liquidation bot is going to need some tokens to trade on our behalf! We want to be able to leverage that data and interact with a DEX to swap tokens. We're going to look at how to implement a display of our token balances on the frontend, so that we can see the changes as the liquidation bot is performing the swaps. We have two different displays to consider: The **mock wallet** which is not connected to Solana, to be used for testing purposes. And the **live wallet** that pulls data from an existing, funded account on Solana to be used on mainnet.
 
 _Remember the safety information about the risks of using real SOL from the introduction_!
 
@@ -12,14 +12,14 @@ Once you click the toggle over to the **live wallet**, you'll notice some change
 
 - The shortened version of a randomly generated pubkey is displayed, mouse-over it for a tooltip showing the entire public key.
 - A textinput is included for you to enter a private key which will then display the associated public key & any SOL or USDC tokens of that keypair.
-- The balance of ORCA tokens is also displayed, which is only relevant to swaps on devnet.
+- You can switch between devnet and mainnet.
 
 We default to using devnet. You should also notice that the balance values change to zero when switching to the **live wallet** since our randomly generated default account has not been funded.
 
 # 🔐 Getting your private key
 
 {% hint style="tip" %}
-Private keys are part of your keypair, such as the one you'll create in Phantom in just a moment. The [base58 encoded](https://medium.com/nakamo-to/what-is-base58-c6c2db7808f3) secret key is commonly called the "private key". This alphanumeric string of the private key is the preferred form for displaying to users. Don't get confused by the difference between "secret key" and "private key" - there really isn't one, they are just different representations of the same information.
+Private keys are part of your Solana keypair, such as the one you'll create using the Phantom wallet in just a moment. The [base58 encoded](https://medium.com/nakamo-to/what-is-base58-c6c2db7808f3) secret key is commonly called the "private key". This alphanumeric string of the private key is the preferred form for displaying to users. Don't get confused by the difference between "secret key" and "private key" - there really isn't one, they are just different formats for the same information.
 {% endhint %}
 
 Using the method `fromSecretKey` which exists on the `Keypair` class from `@solana/web3.js`, it is possible to convert a `UInt8Array` secret key into a Keypair object with `publicKey` and `secretKey` properties. We'd still need to base58 encode the `secretKey` property to arrive at what is commonly called the "private key". A private key allows the holder to sign messages and transactions belonging to the public key. When you get a "private key" from the Phantom wallet, this is what is happening under the hood:
@@ -39,25 +39,29 @@ const _account = Keypair.fromSecretKey(
   ]),
 ); // This is given for testing purposes only. Do NOT use this keypair in any production code.
 
-// Logging the Keypair object, you'll notice that the publicKey is a 32-byte UInt8Array & the secretKey is the entire 64-byte UInt8Array
-// The first 32 bytes of the array are the secret key and the last 32 bytes of the array are the public key
+// Logging the Keypair object, you'll notice that the publicKey is a 32-byte UInt8Array
+// The secretKey is the entire 64-byte UInt8Array
+// The first 32 bytes of the array are the secret key
+// and the last 32 bytes of the array are the public key
 console.log(_account);
 
 // This returns the entire UInt8Array of 64 bytes
 console.log(_account.secretKey);
 
-// The secret key in base58 encoding: 4WoxErVFHZSaiTyDjUhqd6oWRL7gHZJd8ozvWWKZY9EZEtrqxCiD8CFvak7QRCYpuZHLU8FTGALB9y5yenx8rEq3
+// The secret key in base58 encoding:
+// 4WoxErVFHZSaiTyDjUhqd6oWRL7gHZJd8ozvWWKZY9EZEtrqxCiD8CFvak7QRCYpuZHLU8FTGALB9y5yenx8rEq3
 console.log(bs58.encode(_account.secretKey));
 
 // The publicKey property is either a UInt8Array or a BigNumber:
 // PublicKey { _bn: <BN: 7dfd7f354726fed61eaa4745502e344c65f622106004a427dc58b8c98ab4b5ee> }
 console.log(_account.publicKey);
 
-// The public key is commonly represented as a string when being used as an "address": 9UpA4MYkBw5MGfDm5oCB6hskMt6LdUZ8fUtapG6NioLH
+// The public key is commonly represented as a string when being used as an "address":
+// 9UpA4MYkBw5MGfDm5oCB6hskMt6LdUZ8fUtapG6NioLH
 console.log(_account.publicKey.toString());
 ```
 
-When you're ready to test the **live wallet** on _devnet_, here are the steps to follow in the Phantom wallet to get your private key:
+It is not required, but you might want to test the **live wallet**, here are the steps to follow in the Phantom wallet to get your private key:
 
 ![Phantom Private Key Workflow](phantom_secret_key.png)
 
@@ -69,22 +73,7 @@ When you're ready to test the **live wallet** on _devnet_, here are the steps to
 6. You'll need to enter the password you've set up to unlock Phantom to reveal your private key
 7. You'll now be able to copy and paste the private key into the wallet component on the right. Remember to keep your private keys private! 👻
 
-{% hint style="tip" %}
-You can switch Phantom to devnet by clicking the gear icon to open the settings, then scrolling down to "Change Network" where you can select the devnet cluster. This will allow you to confirm the balance change after you've airdropped some SOL.
-{% endhint %}
-
 ![Phantom Settings](phantom_cluster.png)
-
-# 🪂 Airdrop yourself some SOL
-
-It's important to get some SOL on devnet to ensure that the balance is being displayed correctly, also because we'll need to swap some SOL for USDC to be able to start up the liquidation bot. There are several methods of airdropping SOL into a devnet account, and if you've completed the [Build a Solana Wallet](https://learn.figment.io/pathways/solana-wallet) course and the Solana 101 Pathway you should be familiar with this process.
-
-Here's a quick method using a faucet website:
-
-- Go to <https://solfaucet.com/> and paste the public key you just created in Phantom into the text input in the middle of the page
-- You can request a maximum of 2 SOL per attempt. Higher amounts will not work. This is due to limits on the airdrop function on devnet. Click on the blue "DEVNET" button to complete the airdrop.
-
-You can confirm the balance change in Phantom as well as on the Wallet component in the Pathway. We'll cover how to swap some SOL for USDC when it becomes relevant further ahead in the pathway. For now, we've got some building to do 👉
 
 # 🧱 Building the Wallet component
 
@@ -109,19 +98,17 @@ We'll also need to import some other useful tools in the helper file (`/lib/wall
 - [`lodash`](https://lodash.com/docs/4.17.15) is a popular library which simplifies working with arrays, numbers, objects & strings
 - [`swr`](https://swr.vercel.app/) provides us with the `useSWR` hook, a powerful tool to fetch and cache data
 
-We're going to use both the [Orca](https://www.orca.so/) and [Jupiter](https://jup.ag) software development kit (SDK) in this project. Keep in mind that as of this writing, Jupiter does not support Solana's devnet. Orca currently does support devnet, although there is a discrepancy between their prices and Pyth's. You'll see these imports in the file [`components/protocols/pyth/lib/swap.tsx`](https://github.com/figment-networks/learn-web3-dapp/main/components/protocols/pyth/lib/swap.tsx), which we will get to in the next step. For now, just be aware of them:
+We're going to use the [Jupiter](https://jup.ag) software development kit (SDK) in this project. Keep in mind that as of this writing, Jupiter does not support Solana's devnet. You'll see the imports in the file [`components/protocols/pyth/lib/swap.tsx`](https://github.com/figment-networks/learn-web3-dapp/main/components/protocols/pyth/lib/swap.tsx), which we will get to in the next step.
 
 - [`@jup-ag/core`](https://docs.jup.ag/jupiter-core/using-jupiter-core#usage) the Jupiter SDK enables us to create our `JupiterSwapClient`
-- [`@orca-so/sdk`](https://github.com/orca-so/typescript-sdk#orca-typescript-sdk) the Orca SDK enables us to create our `OrcaSwapClient`
 
 # 💎 Interfaces and Constants
 
 Next up, we need to define some important interfaces and constants:
 
-- `WalletBalance` relates to our mock wallet implementation. This holds the balances we'll use in out **mock wallet**.
+- `WalletBalance` relates to our mock wallet implementation. This holds the balances we'll use in our **mock wallet**.
 - An `Order` contains the necessary information to carry out a swap: If it is a buy or sell, the size of the swap, and the relevant tokens.
-  - We also need to specify the mint addresses of the tokens we want to swap.
-  - The reason we need the Orca token's address is because swap routing on devnet uses the Orca token as an intermediate exchange: SOL -> ORCA -> USDC.
+- We also need to specify the [mint addresses](https://spl.solana.com/token#finding-all-token-accounts-for-a-specific-mint) of the tokens we want to swap.
 - We're specifying the decimals, to ease our on the fly calculations 😅. Notice that we're `export`ing these so that they can be accessed by our other components. They'll pop up again further ahead in the Pathway, when we're displaying the order book.
 
 ```typescript
@@ -132,7 +119,6 @@ Next up, we need to define some important interfaces and constants:
 interface WalletBalance {
   sol_balance: number;
   usdc_balance: number;
-  orca_balance: number;
 }
 
 interface Order {
@@ -144,25 +130,23 @@ interface Order {
 
 const SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
 const USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-const ORCA_MINT_ADDRESS = 'orcarKHSqC5CDDsGbho8GKvwExejWHxTqGzXgcewB9L';
 
 export const SOL_DECIMAL = 10 ** 9;
 export const USDC_DECIMAL = 10 ** 6;
-export const ORCA_DECIMAL = 10 ** 6;
 // ...
 ```
 
 # 🪝 The useExtendedWallet hook
 
-We're making a custom hook to handle our wallet interactions which we will call `useExtendedWallet`. Note that this hook combines the functionality for our mock wallet as well as using a **secret key** for an existing (and funded) keypair. You might expect to use a wallet adapter to tap into a browser extension wallet like Phantom. The frequency of swapping we'll be performing requires that we have an alternate, faster method to sign transactions. Nobody wants to sit in front of a computer clicking all day, do they? 😉
+We're making a custom hook to handle our wallet interactions which we will call `useExtendedWallet`. Note that this hook combines the functionality for our mock wallet as well as using a **private key** for an existing keypair. You might expect to use a wallet adapter to tap into a browser extension wallet like Phantom. The frequency of swapping we'll be performing requires that we have an alternate, faster method to sign transactions. Nobody wants to sit in front of a computer clicking all day, do they? 😉
 
-We'll start with the function signature for `useExtendedWallet`. Notice that we're passing a boolean value to determine which wallet we'll use. We also need to specify which Solana cluster to target, devnet or mainnet-beta. Price will default to zero.
+We'll start with the function signature for `useExtendedWallet`. Notice that we're passing a boolean value to determine which display to use (mock or live). We can also specify which Solana cluster to target, devnet or mainnet-beta. Price will default to zero as we have not pulled in any price data from Pyth at this point.
 
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
 export const useExtendedWallet = (
-  useMock = false,
+  useLive = false,
   cluster: Cluster,
   price: number = 0,
 ) => {
@@ -202,27 +186,20 @@ You'll notice that `setBalance` is for setting the **mock wallet** balance in th
 const [balance, setBalance] = useState<WalletBalance>({
   sol_balance: 10 * SOL_DECIMAL,
   usdc_balance: 1400 * USDC_DECIMAL,
-  orca_balance: 0, // just because of the devnet deps.
 });
 // ...
 ```
 
 The `orderBook` is maintained in our app state, and keeps track of the buy and sell orders within an array.
 
+The `balanceFetcher` function is a straightforward axios POST request to the Solana cluster which passes the `getBalance` method for the keypair to return the SOL balance and `getTokenAccountsByOwner` for the SPL token we're using - USDC.
+
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
 // ...
 const [orderBook, setOrderbook] = useState<Order[]>([]);
-// ...
-```
 
-The `balanceFetcher` function is a straightforward axios POST request to the Solana cluster which passes the `getBalance` method for the keypair to return the SOL balance and `getTokenAccountsByOwner` for both SPL tokens - USDC and ORCA.
-
-```typescript
-// components/protocols/pyth/lib/wallet.tsx
-
-// ...
 const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
   axios({
     url: clusterApiUrl(cluster),
@@ -252,27 +229,13 @@ const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
           },
         ],
       },
-      {
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'getTokenAccountsByOwner', // https://docs.solana.com/developing/clients/jsonrpc-api#gettokenaccountsbyowner
-        params: [
-          keyPair?.publicKey.toBase58(),
-          {
-            mint: ORCA_MINT_ADDRESS, // Required as a midway swap token for devnet swaps using Orca.
-          },
-          {
-            encoding: 'jsonParsed',
-          },
-        ],
-      },
     ],
   });
 ```
 
 By leveraging the `useSWR` hook here, we can make sure that the amounts being displayed for the balance of our tokens on the frontend are accurate. The values are cached for us, and even on a slow connection they'll update in a reasonable amount of time. We're also setting a refresh interval of five seconds.
 
-Putting a call to `mutate` in a `useEffect` hook with a dependency of `cluster` means that any time we switch between the mock wallet and the live wallet the balance will be handled by `useSWR`. Clean and simple code, keeps the kids happy 👍
+Putting a call to `mutate` in a `useEffect` hook with a dependency of `cluster` means that any time we switch between the mock wallet and the live wallet, the balance will be handled by `useSWR`. Clean and simple code, keeps the kids happy 👍
 
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
@@ -299,7 +262,7 @@ Our next `useEffect` hook is using lodash to simplify drilling down into the dat
 
 // ...
 useEffect(() => {
-  if (data && !useMock) {
+  if (data && !useLive) {
     /**
      * documentation link for _.get https://lodash.com/docs/4.17.15#get
      */
@@ -320,34 +283,22 @@ useEffect(() => {
 // ...
 ```
 
-Next we'll set up our app state for the `jupiterSwapClient` and `orcaSwapClient`, and then add another `useEffect` hook to initialize the clients whenever there is a change in the `keypair`.
+Next we'll set up our app state for the `jupiterSwapClient`, and then add another `useEffect` hook to initialize the client whenever there is a change in the `keypair`.
 
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
 
 // ...
-/**
- *  jup.ag does not support devnet yet, so we must use Orca.
- */
-const [orcaSwapClient, setOrcaSwapClient] = useState<OrcaSwapClient | null>(
-  null,
-);
-
-/**
- * The SDK allows developers to access over 10 Dexes with more than 6bn in liquidity, allowing developers to find the best route with a simple API call.
- */
 const [jupiterSwapClient, setJupiterSwapClient] =
   useState<JupiterSwapClient | null>(null);
 
 useEffect(() => {
   (async function _init(): Promise<void> {
     console.log('Keypair changed to: ', keyPair?.publicKey.toBase58());
-    console.log('setting up clients');
+    console.log('Setting up client');
     setJupiterSwapClient(null);
-    setOrcaSwapClient(null);
-    await getOrcaSwapClient();
     await getJupiterSwapClient();
-    console.log('clients initialized');
+    console.log('Client initialized');
   })();
 }, [keyPair]);
 // ...
@@ -359,20 +310,11 @@ Now we can define the swapClient getters. The main thing to notice here is that 
 // components/protocols/pyth/lib/wallet.tsx
 
 // ...
-const getOrcaSwapClient = async () => {
-  if (orcaSwapClient) return orcaSwapClient;
-  const _orcaSwapClient = new OrcaSwapClient(
-    keyPair,
-    new Connection(clusterApiUrl('devnet'), 'confirmed'),
-  );
-  setOrcaSwapClient((c) => _orcaSwapClient);
-  return _orcaSwapClient;
-};
-
 const getJupiterSwapClient = async () => {
   if (jupiterSwapClient) return jupiterSwapClient;
   const _jupiterSwapClient = await JupiterSwapClient.initialize(
-    new Connection('https://solana-api.projectserum.com/', 'confirmed'), // why not use clusterApiUrl('mainnet') over projectserum? because mainnet has rate limit at the moment.
+    // why not use clusterApiUrl('mainnet') over projectserum? because public mainnet has rate limits.
+    new Connection('https://solana-api.projectserum.com/', 'confirmed'),
     SOLANA_NETWORKS.MAINNET,
     keyPair,
     SOL_MINT_ADDRESS,
@@ -413,7 +355,9 @@ const addMockOrder = async (order: Order): Promise<SwapResult> => {
   const result = {
     inAmount: bestRoute?.inAmount || 0,
     outAmount: bestRoute?.outAmount || 0,
-    txIds: ['mockTransaction_XXXXX'],
+    txIds: [
+      `mockTransaction_${Math.abs(Math.random()).toString().slice(2, 8)}`,
+    ],
   };
 
   // fake the transaction change.
@@ -444,21 +388,11 @@ const addOrder = useCallback(
   async (order: Order) => {
     console.log('addOrder', useMock, order, cluster);
     let result: SwapResult;
-    if (useMock) {
+    if (!useLive) {
       result = await addMockOrder(order);
-    } else if (!useMock) {
+    } else if (useLive) {
       if (cluster === 'devnet') {
-        console.log('HERE', cluster, useMock);
-        const _orcaClient = await getOrcaSwapClient();
-        if (order.side === 'buy') {
-          result = await _orcaClient?.buy(order.size)!;
-          console.log('result', result);
-        } else if (order.side === 'sell') {
-          console.log(_orcaClient);
-          result = await _orcaClient?.sell(order.size)!;
-        } else {
-          console.log('WTF');
-        }
+        console.log('swaps on devnet are not currently supported!');
       } else if (cluster === 'mainnet-beta') {
         console.log(jupiterSwapClient?.keypair.publicKey.toString());
         const _jupiterSwapClient = await getJupiterSwapClient();
@@ -475,7 +409,7 @@ const addOrder = useCallback(
       setOrderbook((_orderBook) => [extendedOrder, ..._orderBook]);
     }
   },
-  [useMock, cluster, keyPair],
+  [useLive, cluster, keyPair],
 );
 // ...
 ```
@@ -488,19 +422,18 @@ When we're resetting the mock wallet balance, we can calculate the floating poin
 // ...
 const resetWallet = (params = {sol_balance: 10, usdc_balance: 1400}) => {
   if (useLive) {
-    // setSecretKey(undefined);
+    setSecretKey(undefined);
   } else {
     setBalance({
       sol_balance: params.sol_balance * SOL_DECIMAL,
       usdc_balance: params.usdc_balance * USDC_DECIMAL,
-      orca_balance: 0,
     });
   }
 };
 // ...
 ```
 
-Finally, our wallet utility will just return the important values:
+Finally, our wallet utility will return the important values:
 
 ```typescript
 // components/protocols/pyth/lib/wallet.tsx
@@ -535,7 +468,8 @@ useEffect(() => {
     const key = undefined;
     setKeyPair(key);
   } else {
-    const temp = Keypair.generate(); // The mock uses a random keypair to be able to get real market data.
+    // The mock uses a random keypair to be able to get real market data.
+    const temp = Keypair.generate();
     setKeyPair(temp);
   }
 }, [secretKey]);
@@ -566,7 +500,8 @@ useEffect(() => {
     const key = Keypair.fromSecretKey(array);
     setKeyPair(key);
   } else {
-    const temp = Keypair.generate(); // The mock uses a random keypair to be able to get real market data.
+    // The mock uses a random keypair to be able to get real market data.
+    const temp = Keypair.generate();
     setKeyPair(temp);
   }
 }, [secretKey]);
@@ -588,4 +523,4 @@ Once you've completed the code in `components/protocols/pyth/lib/wallet.tsx` and
 
 # 🏁 Conclusion
 
-We learned how to create a display for our account balances, with a little bit of extended functionality so that we can use it with both devnet and mainnet. We also took a look at the specifics of Solana keypairs, and how to use Phantom to create a new account for testing. We then funded that account using a faucet website to get some devnet SOL.
+We learned how to create a display for our account balances, with a little bit of extended functionality so that we can use it with the Solana mainnet. We also took a look at the specifics of Solana keypairs, and how to use Phantom to create a new account for testing.
