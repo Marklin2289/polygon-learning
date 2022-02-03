@@ -15,6 +15,8 @@ The file `components/protocols/pyth/components/Liquidate.tsx` is being rendered 
 
 # 🎠 Playground time
 
+There is no code challenge for this step, at this point you should be familiar with all the components necessary to make use of Pyth price data!
+
 You can try out the complete liquidation bot using the mock wallet and mock swaps right away. Keep in mind that the buy and sell signals are being buffered for 10 seconds before the trend is calculated and the bot decides to buy USDC or sell SOL. The mock swaps are still using the mainnet routes being fetched from Jupiter.
 
 ---
