@@ -93,6 +93,8 @@ Working with SPL tokens on Solana can be tricky, but we'll go over the fundament
 
 An Associated Token Account ("ATA") is an account owned by the SPL Token Program, associated with your public key. It is where SPL tokens of a specific mint address are stored and the balances can be viewed on most Solana block explorers. <solscan.io> has a tab on an account display page which will list your owned token balances.
 
+<!-- did you mean to link to solscan.io above? There's one more further down -->
+
 Without going into too much detail, an ATA is required for Solana users to hold tokens. All we're doing here is using a couple of `Token` class methods, `getAssociatedTokenAddress` and `createAssociatedTokenAccountInstruction`. You don't need to read the code block below unless you want to see how those functions are being used. The [Solana Cookbook](https://solanacookbook.com) is a useful resource for code snippets related to SPL tokens.
 
 ```typescript

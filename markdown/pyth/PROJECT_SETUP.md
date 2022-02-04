@@ -35,7 +35,7 @@ In order to use Pyth, you will need to install the TypeScript/JavaScript library
 yarn add @pythnetwork/client
 ```
 
-This Pathway will only cover use of `@pythnetwork/client`. There are also Rust- Python- and EVM-based clients. Refer to the [list of available client libraries](https://docs.pyth.network/consumers/client-libraries) in the Pyth documentation for more.
+This Pathway will only cover use of `@pythnetwork/client`. There are also Rust-, Python-, and EVM-based clients. Refer to the [list of available client libraries](https://docs.pyth.network/consumers/client-libraries) in the Pyth documentation for more.
 
 ---
 
@@ -56,7 +56,7 @@ Optionally, check out <https://phantom.app/security> to learn more about the sec
 
 If you wish to make use of the Pathway content using DataHub, you will need a DataHub account and a valid API key to access Solana via DataHub's infrastructure. [Sign up for a DataHub account](https://datahub.figment.io/sign_up) and verify your email address.
 
-To use your API key, you should copy the contents of the `.env.example` file located in the project root directory (`/learn-web3-dapp/.env.example`) into a new file named `.env.local` (`/learn-web3-dapp/.env.local`).
+To use your API key, you should copy the contents of the `.env.example` file located in the project root directory (`/learn-web3-dapp/.env.example`) into a new file named `.env.local` (`/learn-web3-dapp/.env.local`). Also, since this file will contain your API key, we have already added it to your `.gitignore`.
 
 {% hint style="info" %}
 Easily duplicate the file with the terminal command `cp .env.example .env.local`!

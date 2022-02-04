@@ -40,3 +40,5 @@ It is also handy to have a peek at the dev tools console in your browser to see 
 # 🏁 Conclusion
 
 Congratulations, you now have a very basic yet functional liquidation bot which depends on Pyth price data to make token swaps on a DEX! There are many ways in which you might seek to improve on this functionality - whether it's just an improved front-end design or implementing a more stringent algorithm for trading.
+
+<!-- Why does the total worth toggle on and off? Also the % change didn't change for me, am I missing something? -->

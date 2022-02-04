@@ -146,7 +146,7 @@ This next piece of code is how we are defining our buy and sell signals based on
 };
 ```
 
-- The returned `data` is what we are passing to the Chart component.
+The returned `data` is what we are passing to the Chart component.
 
 ---
 
@@ -231,6 +231,8 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
 ```
 
 The `CustomizedHistoricalHourAxisTick` is used to display the vertically oriented timestamps at the bottom of the chart. These are what we'll see for the short period of time we're running the chart here. `CustomizedHistoricalDayAxisTick` is used when displaying the larger time ranges. The chart has a dropdown menu to select the time range for displaying data - however we are not storing the chart data anywhere in this app and so the DAY and WEEK settings are mainly for illustrative purposes.
+
+<!-- why have the drodown at all if it's just for illustrative purposes? Why not have just a label that says live? If it's part of the standard component, then it's fine to leave it as is. But if it's easy to change, we should probably change it for simplicity. -->
 
 ```typescript
 const CustomizedHistoricalHourAxisTick = ({x, y, fill, payload}) =>
