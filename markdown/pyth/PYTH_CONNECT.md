@@ -62,7 +62,7 @@ Aggregate means "formed or calculated by the combination of many separate units"
 
 # ⏰ Confidence interval
 
-Pyth publishers must supply a confidence interval because in real markets, _there is no single price for a product_ - it is constantly changing based on market activity over time. This is especially true for Cryptocurrency exchanges where assets can be trading at very different prices.
+Pyth publishers must supply a confidence interval because in real markets, _there is no single price for a product_ - it is constantly changing based on market activity over time. This is especially true for cryptocurrency exchanges where assets can be trading at very different prices across exchanges.
 
 A confidence **interval** is a range of values with an upper bound and a lower bound, computed at a particular confidence **level**.
 
@@ -82,7 +82,7 @@ In other words, your protocol should _minimize state changes during times of lar
 
 Not all price accounts maintain their data in floating point format. Sometimes it is necessary to use an exponent to convert price data from fixed-point to floating point. The readable price (including the decimal, i.e. 150.004731628) is calculated by taking the `price` field from a Pyth price account and multiplying it by `10^exponent`. This will be a negative exponent, which will move the decimal to the left. The exponent is included in the price data held within the price account for a given product.
 
-The price, confidence interval & exponent will be displayed in the component on the right side of this page once you have completed the coding challenge and start the price feed.
+The price, confidence interval and exponent will be displayed in the component on the right side of this page once you have completed the coding challenge and start the price feed.
 
 ---
 
@@ -119,9 +119,9 @@ const Connect = () => {
 **Need some help?** Check out these links & hints 👇
 
 - [What are callback functions](https://www.freecodecamp.org/news/javascript-callback-functions-what-are-callbacks-in-js-and-how-to-use-them/) in JavaScript?
-- To connect to Pyth, use the `PythConnection` class from `@pythnetwork/client` - You'll need to supply a JSON-RPC connection and a Pyth program public key. Seasoned developers may wish to [dive into the code](https://github.com/pyth-network/pyth-client-js/blob/3de72323598131d6d14a9dc9f48f5f225b5fbfd2/src/PythConnection.ts#L29) to see what it's doing.
 - There is a function for mapping Solana clusters to the public key of the Pyth program: `getPythProgramKeyForCluster`. \
   You'll need to supply the name of the Solana cluster you want to get Pyth data from (`mainnet-beta`, `devnet` or `testnet`).
+  - To connect to Pyth, use the `PythConnection` class from `@pythnetwork/client` - You'll need to supply a JSON-RPC connection and a Pyth program public key. Seasoned developers may wish to [dive into the code](https://github.com/pyth-network/pyth-client-js/blob/3de72323598131d6d14a9dc9f48f5f225b5fbfd2/src/PythConnection.ts#L29) to see what it's doing.
 - The `onPriceChange` callback will be invoked every time a Pyth price gets updated. This callback gets two arguments:
   - `price` contains the official Pyth price and confidence, along with the component prices that were combined to produce this result.
   - `product` contains metadata about the price feed, such as the symbol (e.g., "Crypto.SOL/USD") and the number of decimal points.

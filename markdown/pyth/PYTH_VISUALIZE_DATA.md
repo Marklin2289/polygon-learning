@@ -146,7 +146,7 @@ This next piece of code is how we are defining our buy and sell signals based on
 };
 ```
 
-- The returned `data` is what we are passing to the Chart component.
+The returned `data` is what we are passing to the Chart component.
 
 ---
 
