@@ -1,4 +1,4 @@
-import {Select} from 'antd';
+import {Tag} from 'antd';
 import {useEffect, useState} from 'react';
 import {Area, AreaChart, Tooltip, XAxis, YAxis} from 'recharts';
 
@@ -20,15 +20,7 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
   }, [data]);
   return (
     <>
-      <Select
-        value={selectedTimeRange}
-        defaultValue="LIVE"
-        onChange={(value) => setSelectedTimeRange(value)}
-      >
-        <Select.Option value={'LIVE'}>LIVE</Select.Option>
-        <Select.Option value={'1D'}>DAY</Select.Option>
-        <Select.Option value={'1W'}>WEEK</Select.Option>
-      </Select>
+      <Tag color="green">LIVE</Tag>
       <AreaChart
         width={730}
         height={250}
