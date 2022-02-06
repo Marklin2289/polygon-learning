@@ -31,8 +31,15 @@ const Wallet = () => {
 
   const [useLive, setUseLive] = useState(false);
   const [price, setPrice] = useState<number | undefined>(undefined);
-  const {setSecretKey, keyPair, balance, addOrder, orderBook, resetWallet} =
-    useExtendedWallet(useLive, cluster, price);
+  const {
+    setSecretKey,
+    keyPair,
+    balance,
+    addOrder,
+    orderBook,
+    resetWallet,
+    worth,
+  } = useExtendedWallet(useLive, cluster, price);
 
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
   const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
@@ -41,9 +48,6 @@ const Wallet = () => {
   const displayAddress = `${keyPair.publicKey
     .toString()
     .slice(0, 6)}...${keyPair.publicKey.toString().slice(38, 44)}`;
-
-  // State for tracking user worth with current Market Price.
-  const [worth, setWorth] = useState({initial: 0, current: 0});
 
   useEffect(() => {
     const key = `open${Date.now()}`;
@@ -69,10 +73,6 @@ const Wallet = () => {
         type: 'SetIsCompleted',
       });
     }
-
-    // update the current worth each price update.
-    const currentWorth = balance?.sol_balance * price! + balance.usdc_balance;
-    setWorth({...worth, current: currentWorth});
   }, [price, orderSizeUSDC, setPrice]);
 
   useEffect(() => {
@@ -173,7 +173,9 @@ const Wallet = () => {
                   <Statistic
                     value={
                       worth.initial
-                        ? (worth.initial / worth.current) * 100 - 100
+                        ? ((worth.initial / worth.current) * 100 - 100).toFixed(
+                            6,
+                          )
                         : '0'
                     }
                     prefix={'%'}

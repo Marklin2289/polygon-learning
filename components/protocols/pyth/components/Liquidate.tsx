@@ -46,17 +46,21 @@ const Liquidate = () => {
 
   const [useLive, setUseLive] = useState(true);
   const [price, setPrice] = useState<number | undefined>(undefined);
-  const {setSecretKey, keyPair, balance, addOrder, orderBook, resetWallet} =
-    useExtendedWallet(useLive, cluster, price);
+  const {
+    setSecretKey,
+    keyPair,
+    balance,
+    addOrder,
+    orderBook,
+    resetWallet,
+    worth,
+  } = useExtendedWallet(useLive, cluster, price);
 
   // yield is the amount of EMA to trigger a buy/sell signal.
   const [yieldExpectation, setYield] = useState<number>(0.001);
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
   const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
-
-  // state for tracking user worth with current Market Price.
-  const [worth, setWorth] = useState({initial: 0, current: 0});
 
   // Shorten the public key for display purposes
   const displayAddress = `${keyPair.publicKey
@@ -115,8 +119,6 @@ const Liquidate = () => {
       // Set ordersize Amount in Sol respect to USDC.
       setOrderSizeSOL(orderSizeUSDC / price!);
     }
-    const currentWorth = balance?.sol_balance * price! + balance.usdc_balance;
-    setWorth({...worth, current: currentWorth});
   }, [price, orderSizeUSDC, setPrice]);
 
   /**
@@ -364,7 +366,7 @@ const Liquidate = () => {
                 <Statistic
                   value={
                     worth.initial
-                      ? (worth.initial / worth.current) * 100 - 100
+                      ? ((worth.initial / worth.current) * 100 - 100).toFixed(6)
                       : '0'
                   }
                   prefix={'%'}
