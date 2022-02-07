@@ -123,19 +123,9 @@ const Exchange = () => {
         Rx.map((val: number) => {
           if (val > 0) {
             // buy.
-            return {
-              side: 'buy',
-              size: val * orderSizeUSDC,
-              fromToken: 'usdc',
-              toToken: 'sol',
-            };
+            return {undefined};
           } else if (val <= 0) {
-            return {
-              side: 'sell',
-              size: Math.abs(val) * orderSizeSOL,
-              fromToken: 'sol',
-              toToken: 'usdc',
-            };
+            return {undefined};
           }
         }),
       )

@@ -103,7 +103,7 @@ const pythConnection = undefined;
 const Connect = () => {
   // ...
   const getPythData = async (checked: boolean) => {
-    pythConnection.undefined => {
+    pythConnection.onPriceChange((product, price) => {
       if (
         product.symbol === 'Crypto.SOL/USD' &&
         price.price &&
@@ -122,11 +122,6 @@ const Connect = () => {
 - There is a function for mapping Solana clusters to the public key of the Pyth program: `getPythProgramKeyForCluster`. \
   You'll need to supply the name of the Solana cluster you want to get Pyth data from (`mainnet-beta`, `devnet` or `testnet`).
   - To connect to Pyth, use the `PythConnection` class from `@pythnetwork/client` - You'll need to supply a JSON-RPC connection and a Pyth program public key. Seasoned developers may wish to [dive into the code](https://github.com/pyth-network/pyth-client-js/blob/3de72323598131d6d14a9dc9f48f5f225b5fbfd2/src/PythConnection.ts#L29) to see what it's doing.
-- The `onPriceChange` callback will be invoked every time a Pyth price gets updated. This callback gets two arguments:
-  - `price` contains the official Pyth price and confidence, along with the component prices that were combined to produce this result.
-  - `product` contains metadata about the price feed, such as the symbol (e.g., "Crypto.SOL/USD") and the number of decimal points.
-- Once you've set up the connection and the `onPriceChange` callback, you'll be able to tap into the price feed with a simple `pythConnection.start()`! \
-  We have set up an easy to use component here to toggle it on and off, but in production you would probably want to handle this a little bit differently.
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
@@ -179,6 +174,11 @@ const Connect = () => {
 - We created a `connection` instance of the `Connection` class using the `new` constructor, and passing the function `clusterApiUrl` which returns the RPC endpoint URL of the given Solana cluster. `SOLANA_NETWORKS.DEVNET` is a constant defined in the file `types/index.ts`. Slightly more verbose than supplying the string "devnet", though it is more readable and in this way we are not hard-coding the value.
 - We're passing the `checked` boolean to the `getPythData` function to operate starting/stopping the price feed using the antd toggle component.
 - After registering the `onPriceChange` callback on the `pythConnection`, we can perform any actions necessary for our app to function. Using conditional statements to change the behavior of the app depending on the product symbol, price or confidence interval.
+- The `onPriceChange` callback will be invoked every time a Pyth price gets updated. This callback gets two arguments:
+  - `price` contains the official Pyth price and confidence, along with the component prices that were combined to produce this result.
+  - `product` contains metadata about the price feed, such as the symbol (e.g., "Crypto.SOL/USD") and the number of decimal points.
+- Once you've set up the connection and the `onPriceChange` callback, you'll be able to tap into the price feed with a simple `pythConnection.start()`! \
+  We have set up an easy to use component here to toggle it on and off, but in production you would probably want to handle this a little bit differently.
 - `\xB1` is the escaped Hex code for the Unicode character `±`, "plus or minus" - indicating the following value is the confidence interval.
 - We need to provide a way to stop listening to the price feed, in this case when the toggle switch component is turned off it will call `pythConnection.stop()`, removing the callback.
 

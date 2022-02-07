@@ -31,15 +31,8 @@ const Wallet = () => {
 
   const [useLive, setUseLive] = useState(false);
   const [price, setPrice] = useState<number | undefined>(undefined);
-  const {
-    setSecretKey,
-    keyPair,
-    balance,
-    addOrder,
-    orderBook,
-    resetWallet,
-    worth,
-  } = useExtendedWallet(useLive, cluster, price);
+  const {setSecretKey, keyPair, balance, resetWallet, worth} =
+    useExtendedWallet(useLive, cluster, price);
 
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
   const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL

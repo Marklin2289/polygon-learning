@@ -1,9 +1,9 @@
 🥳 **Congratulations**, you have completed the Pyth Pathway! \
 Here's a quick recap of what we covered:
 
-- 🔌 Connecting to Pyth on Solana devnet
+- 🔌 Connecting to Pyth on Solana
 - ⁉️ Subscribing to changes in Pyth's price data
-- 🏦 Implementing a wallet adapter
+- 🏦 Implementing a wallet display
 - 📈 Visualizing market data on a chart
 - 💸 Swapping tokens on a DEX
 - ⛓ Implementing the liquidation bot

@@ -18,9 +18,7 @@ export interface Order {
   side: 'buy' | 'sell';
   size: number;
   fromToken: string;
-  fromTokenLogo: string;
   toToken: string;
-  toTokenLogo: string;
 }
 
 export const SERUM_RPC_URL = 'https://solana-api.projectserum.com/';
@@ -40,8 +38,8 @@ export const useExtendedWallet = (
   const [keyPair, setKeyPair] = useState<Keypair>(Keypair.generate());
   useEffect(() => {
     if (secretKey) {
-      let arr = Uint8Array.from(bs58.decode(secretKey));
-      const key = Keypair.fromSecretKey(arr);
+      let arr = undefined;
+      const key = undefined;
       setKeyPair(key);
     } else {
       const temp = Keypair.generate(); // The mock uses a random keypair to be able to get real market data.
