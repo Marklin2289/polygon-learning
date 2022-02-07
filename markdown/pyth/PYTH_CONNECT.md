@@ -96,7 +96,7 @@ In `components/protocols/pyth/components/Connect.tsx`, implement `getPythData` b
 
 ```typescript
 //...
-const connection = new Connection(clusterApiUrl(PYTH_NETWORKS.DEVNET));
+const connection = new Connection(clusterApiUrl(SOLANA_NETWORKS.DEVNET));
 const pythPublicKey = undefined;
 const pythConnection = undefined;
 
@@ -137,7 +137,7 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 ```typescript
 // solution
 //...
-const connection = new Connection(clusterApiUrl(PYTH_NETWORKS.DEVNET));
+const connection = new Connection(clusterApiUrl(SOLANA_NETWORKS.DEVNET));
 const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
 const pythConnection = new PythConnection(connection, pythPublicKey);
 
@@ -176,7 +176,7 @@ const Connect = () => {
 
 **What happened in the code above?**
 
-- We created a `connection` instance of the `Connection` class using the `new` constructor, and passing the function `clusterApiUrl` which returns the RPC endpoint URL of the given Solana cluster. `PYTH_NETWORKS.DEVNET` is a constant defined in the file `types/index.ts`. Slightly more verbose than supplying the string "devnet", though it is more readable and in this way we are not hard-coding the value.
+- We created a `connection` instance of the `Connection` class using the `new` constructor, and passing the function `clusterApiUrl` which returns the RPC endpoint URL of the given Solana cluster. `SOLANA_NETWORKS.DEVNET` is a constant defined in the file `types/index.ts`. Slightly more verbose than supplying the string "devnet", though it is more readable and in this way we are not hard-coding the value.
 - We're passing the `checked` boolean to the `getPythData` function to operate starting/stopping the price feed using the antd toggle component.
 - After registering the `onPriceChange` callback on the `pythConnection`, we can perform any actions necessary for our app to function. Using conditional statements to change the behavior of the app depending on the product symbol, price or confidence interval.
 - `\xB1` is the escaped Hex code for the Unicode character `±`, "plus or minus" - indicating the following value is the confidence interval.

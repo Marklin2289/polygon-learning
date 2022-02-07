@@ -352,13 +352,7 @@ const Liquidate = () => {
 
               <Col span={12}>
                 <Statistic
-                  value={
-                    price &&
-                    (
-                      (balance?.sol_balance / SOL_DECIMAL) * price! +
-                      balance.usdc_balance / USDC_DECIMAL
-                    ).toFixed(2)
-                  }
+                  value={worth.current.toFixed(4)}
                   prefix={'$'}
                   title={'TOTAL WORTH'}
                 />
@@ -366,11 +360,7 @@ const Liquidate = () => {
 
               <Col span={12}>
                 <Statistic
-                  value={
-                    worth.initial
-                      ? ((worth.initial / worth.current) * 100 - 100).toFixed(6)
-                      : '0'
-                  }
+                  value={worth.change.toFixed(4)}
                   prefix={'%'}
                   title={'Change'}
                 />
@@ -439,12 +429,13 @@ const Liquidate = () => {
                 title: 'Transactions',
                 dataIndex: 'txIds',
                 key: 'txIds',
-                render: (txIds, record) => {
+                render: (txIds) => {
                   return (
                     <>
                       {txIds.map((txId: string) => (
                         <a
-                          href={`https://solscan.io/tx/${txId}?cluster=${record.cluster}`}
+                          // @ts-ignore
+                          href={`https://solscan.io/tx/${txId}`}
                           key={txId}
                           target={'_blank'}
                           rel="noreferrer"

@@ -230,7 +230,7 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
 };
 ```
 
-The `CustomizedHistoricalHourAxisTick` is used to display the vertically oriented timestamps at the bottom of the chart. These are what we'll see for the short period of time we're running the chart here. `CustomizedHistoricalDayAxisTick` is used when displaying the larger time ranges. The chart has a dropdown menu to select the time range for displaying data - however we are not storing the chart data anywhere in this app and so the DAY and WEEK settings are mainly for illustrative purposes.
+The `CustomizedHistoricalHourAxisTick` is used to display the vertically oriented timestamps at the bottom of the chart. All we're doing here is rotating the text and adding a timestamp via the JavaScript `Date` class and the `toLocaleTimeString` method.
 
 ```typescript
 const CustomizedHistoricalHourAxisTick = ({x, y, fill, payload}) =>
@@ -248,25 +248,6 @@ const CustomizedHistoricalHourAxisTick = ({x, y, fill, payload}) =>
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
-        })}
-      </text>
-    </g>
-  ) : null;
-
-const CustomizedHistoricalDayAxisTick = ({x, y, fill, payload}) =>
-  payload.value ? (
-    <g transform={`translate(${x},${y})`}>
-      <text
-        x={0}
-        y={0}
-        dy={16}
-        textAnchor="end"
-        fill={fill}
-        transform="rotate(-90) translate(0,-9.5)"
-      >
-        {new Date(payload.value).toLocaleDateString([], {
-          day: 'numeric',
-          month: 'numeric',
         })}
       </text>
     </g>

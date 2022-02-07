@@ -40,7 +40,6 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
           domain={[domain.dataMin, domain.dataMax || 'auto']}
           tickCount={4}
           scale="linear"
-          // allowDataOverflow={true}
         />
         <XAxis
           stroke={'#222'}
@@ -49,6 +48,7 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
           interval={'preserveStartEnd'}
           minTickGap={0}
           tickLine={false}
+          // @ts-ignore
           tick={CustomizedHistoricalHourAxisTick}
         />
 
@@ -80,9 +80,6 @@ const CustomizedHistoricalHourAxisTick = ({x, y, fill, payload}) =>
         })}
       </text>
     </g>
-  ) : (
-    // @ts-ignore
-    JSX.Element
-  );
+  ) : null;
 
 export default Chart;

@@ -163,24 +163,16 @@ const ChartMock = () => {
   return (
     <Col>
       <Space direction="vertical" size="large">
-        <Space direction="horizontal">
-          <Card
-            size="small"
-            title={symbol}
-            style={{width: 400}}
-            extra={
-              <Switch
-                checkedChildren={<SyncOutlined spin />}
-                unCheckedChildren={'Price feed Off'}
-                onChange={getPythData}
-              />
-            }
-          >
-            <Statistic value={price} prefix={<DollarCircleFilled />} />{' '}
-          </Card>
-        </Space>
+        <Space direction="horizontal"></Space>
         <Space direction="horizontal" size="large"></Space>
         <Card>
+          <Switch
+            checkedChildren={<SyncOutlined spin />}
+            unCheckedChildren={'Pyth'}
+            onChange={getPythData}
+          />
+          <br />
+          <br />
           <Chart data={data} />
         </Card>
       </Space>

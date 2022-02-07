@@ -3,7 +3,7 @@ import {useGlobalState} from 'context';
 import {SyncOutlined} from '@ant-design/icons';
 import {useEffect, useState} from 'react';
 import Confetti from 'react-confetti';
-import {Cluster, clusterApiUrl, Connection} from '@solana/web3.js';
+import {clusterApiUrl, Connection} from '@solana/web3.js';
 import {PythConnection, getPythProgramKeyForCluster} from '@pythnetwork/client';
 import {pythMarketExplorer} from '../lib/index';
 import {
@@ -11,11 +11,11 @@ import {
   AimOutlined,
   CalculatorFilled,
 } from '@ant-design/icons';
-import {PYTH_NETWORKS} from 'types/index';
+import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
 
 const {Title} = Typography;
 
-const connection = new Connection(clusterApiUrl(PYTH_NETWORKS.DEVNET));
+const connection = new Connection(clusterApiUrl(SOLANA_NETWORKS.DEVNET));
 const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
 const pythConnection = new PythConnection(connection, pythPublicKey);
 

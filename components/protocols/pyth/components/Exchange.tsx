@@ -44,8 +44,15 @@ const Exchange = () => {
 
   const [useLive, setUseLive] = useState(true);
   const [price, setPrice] = useState<number | undefined>(undefined);
-  const {setSecretKey, keyPair, balance, addOrder, orderBook, resetWallet} =
-    useExtendedWallet(useLive, cluster, price);
+  const {
+    setSecretKey,
+    keyPair,
+    balance,
+    addOrder,
+    orderBook,
+    resetWallet,
+    worth,
+  } = useExtendedWallet(useLive, cluster, price);
 
   // amount of Ema to buy/sell signal.
   const [yieldExpectation, setYield] = useState<number>(0.001);
@@ -57,9 +64,6 @@ const Exchange = () => {
   const displayAddress = `${keyPair.publicKey
     .toString()
     .slice(0, 6)}...${keyPair.publicKey.toString().slice(38, 44)}`;
-
-  // State for tracking user worth with current Market Price.
-  const [worth, setWorth] = useState({initial: 0, current: 0});
 
   useEffect(() => {
     const btn = (
@@ -84,7 +88,7 @@ const Exchange = () => {
     } else if (cluster === SOLANA_NETWORKS.DEVNET) {
       notification.info({
         message: 'On devnet ✅',
-        description: 'Swaps on devnet have no actual value!',
+        description: 'Swaps on devnet are not functional!',
         duration: 3,
       });
     }
@@ -100,10 +104,6 @@ const Exchange = () => {
       // Set ordersize Amount in Sol respect to USDC.
       setOrderSizeSOL(orderSizeUSDC / price!);
     }
-
-    // update the current worth each price update.
-    const currentWorth = balance?.sol_balance * price! + balance.usdc_balance;
-    setWorth({...worth, current: currentWorth});
   }, [price, orderSizeUSDC, setPrice]);
 
   useEffect(() => {
@@ -332,22 +332,14 @@ const Exchange = () => {
 
               <Col span={12}>
                 <Statistic
-                  value={
-                    price &&
-                    (balance?.sol_balance / SOL_DECIMAL) * price! +
-                      balance.usdc_balance / USDC_DECIMAL
-                  }
+                  value={worth.current.toFixed(4)}
                   title={'TOTAL WORTH'}
                 />
               </Col>
 
               <Col span={12}>
                 <Statistic
-                  value={
-                    worth.initial
-                      ? (worth.initial / worth.current) * 100 - 100
-                      : '0'
-                  }
+                  value={worth.change.toFixed(4)}
                   prefix={'%'}
                   title={'Change'}
                 />
@@ -383,12 +375,12 @@ const Exchange = () => {
                 title: 'Transactions',
                 dataIndex: 'txIds',
                 key: 'txIds',
-                render: (txIds, record) => {
+                render: (txIds) => {
                   return (
                     <>
                       {txIds.map((txId: string) => (
                         <a
-                          href={`https://solscan.io/tx/${txId}?cluster=${cluster}`}
+                          href={`https://solscan.io/tx/${txId}`}
                           key={txId}
                           target={'_blank'}
                           rel="noreferrer"

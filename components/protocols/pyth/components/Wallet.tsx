@@ -13,9 +13,9 @@ import {
 import {useGlobalState} from 'context';
 import {DollarCircleFilled, ArrowRightOutlined} from '@ant-design/icons';
 import React, {useEffect, useState} from 'react';
-import {Cluster, clusterApiUrl, Connection} from '@solana/web3.js';
+import {Cluster} from '@solana/web3.js';
 import {EventEmitter} from 'events';
-import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
+import {SOLANA_NETWORKS} from 'types/index';
 import {
   SOL_DECIMAL,
   USDC_DECIMAL,
@@ -61,7 +61,7 @@ const Wallet = () => {
     } else if (cluster === SOLANA_NETWORKS.DEVNET) {
       notification.info({
         message: 'On devnet ✅',
-        description: 'Swaps on devnet have no actual value!',
+        description: 'Swaps on devnet are not functional!',
         duration: 2,
       });
     }
@@ -73,10 +73,6 @@ const Wallet = () => {
         type: 'SetIsCompleted',
       });
     }
-
-    // update the current worth each price update.
-    const currentWorth = balance?.sol_balance * price! + balance.usdc_balance;
-    setWorth({...worth, current: currentWorth});
   }, [price, orderSizeUSDC, setPrice]);
 
   useEffect(() => {
@@ -161,13 +157,7 @@ const Wallet = () => {
 
                 <Col span={12}>
                   <Statistic
-                    value={
-                      price &&
-                      (
-                        (balance?.sol_balance / SOL_DECIMAL) * price! +
-                        balance.usdc_balance / USDC_DECIMAL
-                      ).toFixed(2)
-                    }
+                    value={worth.current.toFixed(4)}
                     prefix={'$'}
                     title={'TOTAL WORTH'}
                   />
@@ -175,13 +165,7 @@ const Wallet = () => {
 
                 <Col span={12}>
                   <Statistic
-                    value={
-                      worth.initial
-                        ? ((worth.initial / worth.current) * 100 - 100).toFixed(
-                            6,
-                          )
-                        : '0'
-                    }
+                    value={worth.change.toFixed(4)}
                     prefix={'%'}
                     title={'Change'}
                   />
