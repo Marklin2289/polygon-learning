@@ -91,7 +91,7 @@ import {Jupiter, RouteInfo, TOKEN_LIST_URL} from '@jup-ag/core';
 
 Working with SPL tokens on Solana can be tricky, but we'll go over the fundamentals quickly so you're up to speed. You can get more details from the [Solana docs on the topic](https://spl.solana.com/associated-token-account) if you're interested.
 
-An Associated Token Account ("ATA") is an account owned by the SPL Token Program, associated with your public key. It is where SPL tokens of a specific mint address are stored and the balances can be viewed on most Solana block explorers. <solscan.io> has a tab on an account display page which will list your owned token balances.
+An Associated Token Account ("ATA") is an account owned by the SPL Token Program, associated with your public key. It is where SPL tokens of a specific mint address are stored and the balances can be viewed on most Solana block explorers. [solscan.io](https://solscan.io) has a tab on the account display page which will list your owned token balances.
 
 <!-- did you mean to link to solscan.io above? There's one more further down -->
 
@@ -131,7 +131,7 @@ Wrapped SOL ("wSOL") is an SPL token. Sometimes it is necessary to be able to sw
 
 As you can see, we are simply creating a transaction by adding instructions to the System Program and the SPL Token program.
 
-The function returns a <solscan.io> URL for the transaction so that details are at your fingertips.
+The function returns a solscan.io URL for the transaction so that details are at your fingertips.
 
 ```typescript
 // components/protocols/pyth/lib/swap.ts
