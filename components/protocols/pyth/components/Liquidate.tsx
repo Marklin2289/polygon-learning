@@ -350,25 +350,14 @@ const Liquidate = () => {
 
               <Col span={12}>
                 <Statistic
-                  value={
-                    price &&
-                    (
-                      (balance?.sol_balance / SOL_DECIMAL) * price! +
-                      balance.usdc_balance / USDC_DECIMAL
-                    ).toFixed(2)
-                  }
+                  value={worth.current.toFixed(4)}
                   prefix={'$'}
                   title={'TOTAL WORTH'}
                 />
               </Col>
-
               <Col span={12}>
                 <Statistic
-                  value={
-                    worth.initial
-                      ? ((worth.initial / worth.current) * 100 - 100).toFixed(6)
-                      : '0'
-                  }
+                  value={worth.change.toFixed(4)}
                   prefix={'%'}
                   title={'Change'}
                 />

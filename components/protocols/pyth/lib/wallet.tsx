@@ -2,7 +2,7 @@ import {Cluster, clusterApiUrl, Connection} from '@solana/web3.js';
 import {Keypair} from '@solana/web3.js';
 import axios from 'axios';
 import bs58 from 'bs58';
-import _ from 'lodash';
+import _, {initial} from 'lodash';
 import {useCallback, useEffect, useState} from 'react';
 import useSWR from 'swr';
 import {SOLANA_NETWORKS} from 'types';
@@ -56,19 +56,31 @@ export const useExtendedWallet = (
   const [worth, setWorth] = useState({
     initial: 0,
     current: 0,
+    change: 0,
   });
 
   const updateCurrentWorth = (updateInitial = false) => {
-    const currentWorth = balance.sol_balance * price + balance.usdc_balance;
+    const solWorth = (balance.sol_balance / SOL_DECIMAL) * price;
+    const usdcWorth = balance.usdc_balance / USDC_DECIMAL;
+    const currentWorth = solWorth + usdcWorth;
     if (updateInitial) {
       setWorth((worth) => ({
         ...worth,
         initial: currentWorth,
         current: currentWorth,
+        change: 0,
       }));
     } else {
-      setWorth((worth) => ({...worth, current: currentWorth}));
+      setWorth((worth) => ({
+        ...worth,
+        current: currentWorth,
+        change: calculateChange(worth.initial, currentWorth),
+      }));
     }
+  };
+
+  const calculateChange = (initial: number, current: number): number => {
+    return (initial / current) * 100 - 100;
   };
 
   // update the current worth each price update.
