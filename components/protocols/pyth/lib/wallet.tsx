@@ -34,7 +34,7 @@ export const useExtendedWallet = (
   cluster: Cluster,
   price: number = 0,
 ) => {
-  const [secretKey, setSecretKey] = useLocalStorage('secretKey', undefined);
+  const [secretKey, setSecretKey] = useLocalStorage<string>('secretKey', '');
   const [keyPair, setKeyPair] = useState<Keypair>(Keypair.generate());
   useEffect(() => {
     if (secretKey) {
@@ -51,6 +51,36 @@ export const useExtendedWallet = (
     sol_balance: 10 * SOL_DECIMAL,
     usdc_balance: 1400 * USDC_DECIMAL,
   });
+
+  // State for tracking user worth with current Market Price.
+  const [worth, setWorth] = useState({
+    initial: 0,
+    current: 0,
+  });
+
+  const updateCurrentWorth = (updateInitial = false) => {
+    const currentWorth = balance.sol_balance * price + balance.usdc_balance;
+    if (updateInitial) {
+      setWorth((worth) => ({
+        ...worth,
+        initial: currentWorth,
+        current: currentWorth,
+      }));
+    } else {
+      setWorth((worth) => ({...worth, current: currentWorth}));
+    }
+  };
+
+  // update the current worth each price update.
+  useEffect(() => {
+    if (price) {
+      if (worth.initial === 0) {
+        updateCurrentWorth(true);
+      } else {
+        updateCurrentWorth();
+      }
+    }
+  }, [price]);
 
   const [orderBook, setOrderbook] = useState<Order[]>([]);
 
@@ -178,12 +208,13 @@ export const useExtendedWallet = (
 
   const resetWallet = (params = {sol_balance: 10, usdc_balance: 1400}) => {
     if (useLive) {
-      setSecretKey(undefined);
+      setSecretKey('');
     } else {
       setBalance({
         sol_balance: params.sol_balance * SOL_DECIMAL,
         usdc_balance: params.usdc_balance * USDC_DECIMAL,
       });
+      updateCurrentWorth(true);
     }
   };
 
@@ -194,6 +225,7 @@ export const useExtendedWallet = (
     setSecretKey,
     addOrder,
     orderBook,
+    worth,
   };
 };
 

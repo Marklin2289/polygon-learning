@@ -388,7 +388,7 @@ const Exchange = () => {
                     <>
                       {txIds.map((txId: string) => (
                         <a
-                          href={`https://solscan.io/tx/${txId}?cluster=${record.cluster}`}
+                          href={`https://solscan.io/tx/${txId}?cluster=${cluster}`}
                           key={txId}
                           target={'_blank'}
                           rel="noreferrer"

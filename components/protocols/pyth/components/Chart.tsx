@@ -1,4 +1,4 @@
-import {Select} from 'antd';
+import {Tag} from 'antd';
 import {useEffect, useState} from 'react';
 import {Area, AreaChart, Tooltip, XAxis, YAxis} from 'recharts';
 
@@ -20,15 +20,7 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
   }, [data]);
   return (
     <>
-      <Select
-        value={selectedTimeRange}
-        defaultValue="LIVE"
-        onChange={(value) => setSelectedTimeRange(value)}
-      >
-        <Select.Option value={'LIVE'}>LIVE</Select.Option>
-        <Select.Option value={'1D'}>DAY</Select.Option>
-        <Select.Option value={'1W'}>WEEK</Select.Option>
-      </Select>
+      <Tag color="green">LIVE</Tag>
       <AreaChart
         width={730}
         height={250}
@@ -69,6 +61,7 @@ export const Chart: React.FC<{data: any}> = ({data}) => {
   );
 };
 
+// @ts-ignore
 const CustomizedHistoricalHourAxisTick = ({x, y, fill, payload}) =>
   payload.value ? (
     <g transform={`translate(${x},${y})`}>
@@ -87,25 +80,9 @@ const CustomizedHistoricalHourAxisTick = ({x, y, fill, payload}) =>
         })}
       </text>
     </g>
-  ) : null;
-
-const CustomizedHistoricalDayAxisTick = ({x, y, fill, payload}) =>
-  payload.value ? (
-    <g transform={`translate(${x},${y})`}>
-      <text
-        x={0}
-        y={0}
-        dy={16}
-        textAnchor="end"
-        fill={fill}
-        transform="rotate(-90) translate(0,-9.5)"
-      >
-        {new Date(payload.value).toLocaleDateString([], {
-          day: 'numeric',
-          month: 'numeric',
-        })}
-      </text>
-    </g>
-  ) : null;
+  ) : (
+    // @ts-ignore
+    JSX.Element
+  );
 
 export default Chart;
