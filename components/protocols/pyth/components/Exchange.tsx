@@ -97,14 +97,14 @@ const Exchange = () => {
   // Reset the wallet to the initial state.
 
   useEffect(() => {
-    if (price) {
+    if (orderBook.length > 0) {
       dispatch({
         type: 'SetIsCompleted',
       });
-      // Set ordersize Amount in Sol respect to USDC.
+      // Set ordersize amount in SOL with respect to USDC.
       setOrderSizeSOL(orderSizeUSDC / price!);
     }
-  }, [price, orderSizeUSDC, setPrice]);
+  }, [price, orderSizeUSDC, setPrice, orderBook]);
 
   useEffect(() => {
     signalListener.once('*', () => {
@@ -119,7 +119,7 @@ const Exchange = () => {
         Rx.map((orders: number[]) => {
           return orders.reduce((prev, curr) => prev + curr, 0); // sum of the orders in the buffer.
         }),
-        Rx.filter((v) => v !== 0), // if we have equaviently orders. don't put any order.
+        Rx.filter((v) => v !== 0), // if we have equivalent signals, don't add any orders.
         Rx.map((val: number) => {
           if (val > 0) {
             // buy.
@@ -150,7 +150,6 @@ const Exchange = () => {
   const [data, setData] = useState<any[]>([]);
   const getPythData = async (checked: boolean) => {
     pythConnection.onPriceChange((product, price) => {
-      // sample output: SRM/USD: $8.68725 ±$0.0131
       if (
         product.symbol === 'Crypto.SOL/USD' &&
         price.price &&
@@ -205,11 +204,11 @@ const Exchange = () => {
             newData.ema = currentEma;
 
             /**
-             * trend of the price respect to preview ema.
-             * if the price is higher than the ema, it is a positive trend.
-             * if the price is lower than the ema, it is a negative trend.
+             * Trend of the price with respect to preview ema.
+             * If the price is higher than the ema, it is a positive trend.
+             * If the price is lower than the ema, it is a negative trend.
              * prev 10 ema trend:
-             * curr 11 ema  this will yield as trend to be % 110 up which is BUY signal.
+             * curr 11 ema  this would trend %110 up which is a BUY signal.
              */
             const trend = newData.ema / data[data.length - 1].ema;
             if (trend * 100 > 100 + yieldExpectation) {

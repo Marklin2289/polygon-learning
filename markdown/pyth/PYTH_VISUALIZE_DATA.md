@@ -348,7 +348,7 @@ setData((data) => {
 
 # ✅ Make sure it works
 
-Once you've completed the code and saved the file, the Next.js development server will rebuild the page. Now, turning the price feed on will populate the chart! Watch it run for a minute or two, observing the way the Pyth data is displayed. This is an un-optimized implementation of the chart and it's possible that it might feel a little choppy. There are ways to smooth it out, but they're beyond the scope of this lesson.
+Once you've completed the code and saved the file, the Next.js development server will rebuild the page. Now, turning the price feed on will populate the chart (including the EMA)! Watch it run for a minute or two, observing the way the Pyth data is displayed. This is an un-optimized implementation of the chart and it's possible that it might feel a little choppy. There are ways to smooth it out, but they're beyond the scope of this lesson.
 
 Don't forget to turn the price feed off before moving to the next step 😄.
 

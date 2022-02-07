@@ -141,7 +141,7 @@ const Liquidate = () => {
         Rx.map((orders: number[]) => {
           return orders.reduce((prev, curr) => prev + curr, 0); // sum of the orders in the buffer.
         }),
-        Rx.filter((v) => v !== 0), // if we have equaviently orders. don't put any order.
+        Rx.filter((v) => v !== 0), // if we have equivalent signals, don't add any orders.
         Rx.map((val: number) => {
           if (val > 0) {
             // buy.
@@ -242,11 +242,11 @@ const Liquidate = () => {
             newData.ema = currentEma;
 
             /**
-             * trend of the price respect to preview ema.
-             * if the price is higher than the ema, it is a positive trend.
-             * if the price is lower than the ema, it is a negative trend.
+             * Trend of the price with respect to preview ema.
+             * If the price is higher than the ema, it is a positive trend.
+             * If the price is lower than the ema, it is a negative trend.
              * prev 10 ema trend:
-             * curr 11 ema  this will yield as trend to be % 110 up which is BUY signal.
+             * curr 11 ema  this would trend %110 up which is a BUY signal.
              */
             const trend = newData.ema / data[data.length - 1].ema;
             if (trend * 100 > 100 + yieldExpectation) {
@@ -273,13 +273,6 @@ const Liquidate = () => {
       pythConnection.start();
     }
   };
-
-  // if (orderBook.length > 0) {
-  //   console.log(orderBook);
-  // }
-
-  let bal_i = balance?.sol_balance;
-  let balu_i = balance?.usdc_balance;
 
   return (
     <Col>

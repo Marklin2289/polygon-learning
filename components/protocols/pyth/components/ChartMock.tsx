@@ -22,8 +22,11 @@ const ChartMock = () => {
 
   const [useLive, setUseLive] = useState(true);
   const [price, setPrice] = useState<number | undefined>(undefined);
-  const {setSecretKey, keyPair, balance, addOrder, orderBook, resetWallet} =
-    useExtendedWallet(useLive, cluster, price);
+  const {setSecretKey, keyPair, balance, resetWallet} = useExtendedWallet(
+    useLive,
+    cluster,
+    price,
+  );
 
   // Amount of EMA to buy/sell signal.
   const [yieldExpectation, setYield] = useState<number>(0.001);
@@ -31,21 +34,9 @@ const ChartMock = () => {
   const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
 
-  // State for tracking user worth with current Market Price.
-  const [worth, setWorth] = useState({initial: 0, current: 0});
-
   useEffect(() => {
-    if (price) {
-      dispatch({
-        type: 'SetIsCompleted',
-      });
-      // Set ordersize Amount in Sol respect to USDC.
-      setOrderSizeSOL(orderSizeUSDC / price!);
-    }
-
-    // update the current worth each price update.
-    const currentWorth = balance?.sol_balance * price! + balance.usdc_balance;
-    setWorth({...worth, current: currentWorth});
+    // Set ordersize Amount in Sol respect to USDC.
+    setOrderSizeSOL(orderSizeUSDC / price!);
   }, [price, orderSizeUSDC, setPrice]);
 
   useEffect(() => {
@@ -140,6 +131,11 @@ const ChartMock = () => {
               undefined;
             }
           }
+
+          dispatch({
+            type: 'SetIsCompleted',
+          });
+
           return [...data, newData];
         });
         setSymbol('Crypto.SOL/USD');
