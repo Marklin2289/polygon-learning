@@ -112,7 +112,8 @@ const ChartMock = () => {
             newData.sma = sum / window;
 
             const previousEma = newData.ema || newData.sma;
-            const currentEma = undefined;
+            const currentEma =
+              (newData.price - previousEma) * smoothingFactor + previousEma;
             newData.ema = currentEma;
 
             /**
@@ -126,9 +127,9 @@ const ChartMock = () => {
              */
             const trend = newData.ema / data[data.length - 1].ema;
             if (trend * 100 > 100 + yieldExpectation) {
-              undefined;
+              signalListener.emit('buy');
             } else if (trend * 100 < 100 - yieldExpectation) {
-              undefined;
+              signalListener.emit('sell');
             }
           }
 

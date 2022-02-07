@@ -16,8 +16,8 @@ import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
 const {Title} = Typography;
 
 const connection = new Connection(clusterApiUrl(SOLANA_NETWORKS.DEVNET));
-const pythPublicKey = undefined;
-const pythConnection = undefined;
+const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
+const pythConnection = new PythConnection(connection, pythPublicKey);
 
 const Connect = () => {
   const {state, dispatch} = useGlobalState();
