@@ -63,7 +63,7 @@ console.log(_account.publicKey.toString());
 
 It is not required, but you might want to test the **live wallet**, here are the steps to follow in the Phantom wallet to get your private key:
 
-![Phantom Private Key Workflow](phantom_secret_key.png)
+![Phantom Private Key Workflow](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/phantom_secret_key.png)
 
 1. Click the hamburger menu at the top left
 2. With the hamburger menu up, click on "Add / Connect Wallet"
@@ -73,7 +73,7 @@ It is not required, but you might want to test the **live wallet**, here are the
 6. You'll need to enter the password you've set up to unlock Phantom to reveal your private key
 7. You'll now be able to copy and paste the private key into the wallet component on the right. Remember to keep your private keys private! 👻
 
-![Phantom Settings](phantom_cluster.png)
+![Phantom Settings](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/phantom_cluster.png)
 
 # 🧱 Building the Wallet component
 

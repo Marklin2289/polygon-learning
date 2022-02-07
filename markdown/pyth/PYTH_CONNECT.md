@@ -15,7 +15,7 @@ The purpose of this Pathway is to give you hands-on experience using Pyth by inc
 
 In essence the "bot" we are building is more like Wall-E than The Terminator. We're focused more on having fun and learning, than on ruthless efficiency.
 
-![Wall-E and The Terminator](walle-terminator.jpg)
+![Wall-E and The Terminator](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/walle-terminator.jpg)
 
 # 🧐 What is Pyth, anyway?
 

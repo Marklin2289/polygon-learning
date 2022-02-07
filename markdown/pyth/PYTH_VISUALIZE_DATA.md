@@ -33,7 +33,7 @@ For the hard-boiled engineers and the truly devoted learners, there is a dry exp
 
 The EMA formula can be expressed as:
 
-![EMA Formula](ema_formula.png)
+![EMA Formula](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/ema_formula.png)
 
 - `EMAc` is the currently calculated EMA - "c" stands for "current", because we are going to be using a time frame smaller than a single day on our chart. This is the product of our calculation, but don't get too hung up on this.
 - `value` is the current value, so in our case the price being reported by Pyth.
@@ -42,7 +42,7 @@ The EMA formula can be expressed as:
 
 We need to define our **smoothing factor** or `weight`, which can be done by dividing 2 by the **window** + 1:
 
-![Weight Formula](weight_calculation.png)
+![Weight Formula](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/weight_calculation.png)
 
 ```typescript
 // solution
@@ -58,7 +58,7 @@ weight = -----
 const ema = (newData.price - previousEma) * smoothingFactor + previousEma;
 ```
 
-![EMA Chart](ema_chart.png)
+![EMA Chart](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/ema_chart.png)
 
 We can add a `setData` hook to the `getPythData` function that we created in our initial Connect component, so that the `data` is being calculated on the spot, then passed into the Chart component. `newData` is defining the data structure in place, and populating the object with the price, confidence and a timestamp. We're using this `data` in the Chart component. You'll notice that we leave the SMA, EMA and trend as `undefined`. They're being calculated and set inside `setData` 😀
 
@@ -262,7 +262,7 @@ The Chart component is deceptively simple, most of it is setting up how the char
 
 Clicking on the price feed toggle switch will begin fetching price data from Pyth and passing it along to the Chart component. The green line indicating the EMA will not appear at first, because an exponential moving average requires a historical value to be calculated against. One thing to notice is how the SMA does not react to changes in the price in the same way that the EMA does. After a few seconds, the green line indicating the EMA will appear and begin tracking along the chart. You will notice that it does not precisely follow Pyth's reported price. In most cases, it will fall within the range of the confidence interval - however there can be cases where it appears to fall outside of the confidence interval. You can coroborate using the Simple moving average if you like. You can inspect the actual values at a given tick by moving your mouse cursor over the chart, which will display the Tooltip.
 
-![EMA Outside Confidence Interval](ema_outside_confidence.png)
+![EMA Outside Confidence Interval](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/ema_outside_confidence.png)
 
 ---
 

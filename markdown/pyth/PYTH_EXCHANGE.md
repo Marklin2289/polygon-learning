@@ -473,7 +473,7 @@ Before doing this on devnet, give it a try using the mock wallet! You'll be able
 - "Side" indicates whether the order was a buy or sell
 - You can easily interpret the outgoing and incoming tokens and amounts
 
-![Mock Order](mock_orderbook.png)
+![Mock Order](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/mock_orderbook.png)
 
 Let's take a quick look at the Table in the return value of `components/protocols/pyth/components/Exchange.tsx` to better understand how the order book is being rendered. The antd Table component takes an _array of objects_ for the `columns`, each of these objects has a `title`, `dataIndex` and `key` - optionally we can use the `render` method to add whatever additional React fragments we need, for example: Mapping the transaction IDs to a link pointing to the correct page on solscan.io, or changing the color of the tags we use to display the amounts.
 
