@@ -25,6 +25,7 @@ import {
   Order,
   SOL_DECIMAL,
   USDC_DECIMAL,
+  ORCA_DECIMAL,
   useExtendedWallet,
 } from '@figment-pyth/lib/wallet';
 import * as Rx from 'rxjs';
@@ -54,7 +55,7 @@ const Exchange = () => {
     worth,
   } = useExtendedWallet(useLive, cluster, price);
 
-  // amount of Ema to buy/sell signal.
+  // yieldExpectation is the amount of EMA to buy/sell signal
   const [yieldExpectation, setYield] = useState<number>(0.001);
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
   const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
@@ -66,30 +67,19 @@ const Exchange = () => {
     .slice(0, 6)}...${keyPair.publicKey.toString().slice(38, 44)}`;
 
   useEffect(() => {
-    const btn = (
-      <Button
-        style={{backgroundColor: '#000'}}
-        type="primary"
-        size="small"
-        onClick={() => notification.close(key)}
-      >
-        I acknowledge the risks and want to proceed
-      </Button>
-    );
     const key = `open${Date.now()}`;
     if (cluster === SOLANA_NETWORKS.MAINNET) {
       notification.warn({
-        message: 'WARNING!',
+        message: 'MAINNET',
         description: 'Swaps on mainnet-beta use real funds ⚠️',
-        btn,
         key,
-        duration: 0,
+        duration: 5,
       });
     } else if (cluster === SOLANA_NETWORKS.DEVNET) {
       notification.info({
-        message: 'On devnet ✅',
-        description: 'Swaps on devnet are not functional!',
-        duration: 3,
+        message: 'DEVNET',
+        description: 'Swaps on devnet do not use real funds ✅',
+        duration: 2,
       });
     }
   }, [cluster]);
@@ -123,9 +113,19 @@ const Exchange = () => {
         Rx.map((val: number) => {
           if (val > 0) {
             // buy.
-            return {undefined};
+            return {
+              side: 'buy',
+              size: val * orderSizeUSDC,
+              fromToken: 'usdc',
+              toToken: 'sol',
+            };
           } else if (val <= 0) {
-            return {undefined};
+            return {
+              side: 'sell',
+              size: Math.abs(val) * orderSizeSOL,
+              fromToken: 'sol',
+              toToken: 'usdc',
+            };
           }
         }),
       )
@@ -319,9 +319,19 @@ const Exchange = () => {
                 />
               </Col>
 
+              {useLive ? (
+                <Col span={12}>
+                  <Statistic
+                    value={balance?.orca_balance / ORCA_DECIMAL}
+                    title={'ORCA'}
+                  />
+                </Col>
+              ) : null}
+
               <Col span={12}>
                 <Statistic
                   value={worth.current.toFixed(4)}
+                  prefix={'$'}
                   title={'TOTAL WORTH'}
                 />
               </Col>
@@ -369,7 +379,7 @@ const Exchange = () => {
                     <>
                       {txIds.map((txId: string) => (
                         <a
-                          href={`https://solscan.io/tx/${txId}`}
+                          href={`https://solscan.io/tx/${txId}?cluster=${cluster}`}
                           key={txId}
                           target={'_blank'}
                           rel="noreferrer"
@@ -431,12 +441,35 @@ const Exchange = () => {
 const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
   addOrder,
 }) => {
-  const [buySize, setBuySize] = useState(8);
-  const [sellSize, setSellSize] = useState(0.1);
+  const [buySize, setBuySize] = useState<number>(0.1);
+  const [sellSize, setSellSize] = useState<number>(0.1);
+  const [sellInitialSize, setSellInitialSize] = useState<number>(0.1);
   return (
     <Card bordered={false}>
       <Row>
-        <Col span={6}>
+        <Input.Group compact>
+          <br />
+          <InputNumber
+            min={0}
+            value={sellSize}
+            onChange={(val) => setSellSize(val)}
+          />
+          <Button
+            type="primary"
+            onClick={async () =>
+              await addOrder({
+                side: 'sell',
+                size: sellSize,
+                fromToken: 'SOL',
+                toToken: 'ORCA',
+              })
+            }
+          >
+            SOL -&gt; ORCA
+          </Button>
+        </Input.Group>
+        <Col span={8}>
+          <br />
           <Input.Group compact>
             <InputNumber
               min={0}
@@ -458,7 +491,10 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
             </Button>
           </Input.Group>
         </Col>
-        <Col span={6}>
+        <br />
+        <br />
+        <Col span={8}>
+          <br />
           <Input.Group compact>
             <InputNumber
               min={0}

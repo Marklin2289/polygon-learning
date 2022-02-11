@@ -1,4 +1,4 @@
-Now that we are able to get Pyth price data, we need to take a detour away from Pyth for a moment to get our account interface figured out. The liquidation bot is going to need some tokens to trade on our behalf! We want to be able to leverage that data and interact with a DEX to swap tokens. We're going to look at how to implement a display of our token balances on the frontend, so that we can see the changes as the liquidation bot is performing the swaps. We have two different displays to consider: The **mock wallet** which is not connected to Solana, to be used for testing purposes. And the **live wallet** that pulls data from an existing, funded account on Solana to be used on mainnet.
+Now that we are able to get Pyth price data, we need to take a detour away from Pyth for a moment to get our account interface figured out. The liquidation bot is going to need some tokens to trade on our behalf! We want to be able to leverage that data and interact with a DEX to swap tokens. We're going to look at how to implement a display of our token balances on the frontend, so that we can see the changes as the liquidation bot is performing the swaps. We have two different displays to consider: The **mock wallet** which is not connected to Solana, to be used for testing purposes. And the **live wallet** that pulls data from an existing, funded account on Solana to be used on either devnet or mainnet.
 
 _Remember the safety information about the risks of using real SOL from the introduction_!
 
@@ -11,7 +11,7 @@ We assume that **you _will not_ want to use an account containing real SOL on ma
 Once you click the toggle over to the **live wallet**, you'll notice some changes:
 
 - The shortened version of a randomly generated pubkey is displayed, mouse-over it for a tooltip showing the entire public key.
-- A textinput is included for you to enter a private key which will then display the associated public key & any SOL or USDC tokens of that keypair.
+- A textinput is included for you to enter a private key which will then display the associated public key & any SOL, USDC or ORCA tokens owned by that keypair.
 - You can switch between devnet and mainnet.
 
 We default to using devnet. You should also notice that the balance values change to zero when switching to the **live wallet** since our randomly generated default account has not been funded.
@@ -74,6 +74,16 @@ It is not required, but you might want to test the **live wallet**, here are the
 7. You'll now be able to copy and paste the private key into the wallet component on the right. Remember to keep your private keys private! 👻
 
 ![Phantom Settings](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/phantom_cluster.png)
+
+# 🪂 Getting an airdrop on Solana devnet
+
+{% hint style="tip" %}
+If you already know how to fund your wallet with an airdrop, go ahead and get some SOL (more is better, but make sure to have at least 2 SOL for testing the liquidation bot).
+{% endhint %}
+
+We'll need to acquire some SOL to perform swaps on devnet. The simplest way to do this is by visiting [solfaucet.com](https://solfaucet.com/). Copy the public key of your keypair, and paste it into the textarea on the faucet site. You can airdrop up to 2 SOL per request using this method. Click on the "Devnet" button and in a few seconds, you will have some SOL to play with on devnet.
+
+![](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/sol_faucet.png?raw=true)
 
 # 🧱 Building the Wallet component
 
@@ -458,7 +468,7 @@ useEffect(() => {
   if (secretKey) {
     let arr = undefined;
     const key = undefined;
-    setKeyPair(key);
+    // setKeyPair(key);
   } else {
     // The mock uses a random keypair to be able to get real market data.
     const temp = Keypair.generate();
@@ -478,7 +488,7 @@ useEffect(() => {
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
----
+---https://matic-mumbai--rpc.datahub.figment.io/apikey/e428399c5e9accbe0f0c05737c2c961c/
 
 # 😅 Solution
 
@@ -491,6 +501,8 @@ useEffect(() => {
     let array = Uint8Array.from(bs58.decode(secretKey));
     const key = Keypair.fromSecretKey(array);
     setKeyPair(key);
+    // You will need to uncomment setKeyPair(key); above.
+    // If we leave it uncommented, the page will break when it loads.
   } else {
     // The mock uses a random keypair to be able to get real market data.
     const temp = Keypair.generate();
@@ -509,7 +521,7 @@ useEffect(() => {
 
 # ✅ Make sure it works
 
-Once you've completed the code in `components/protocols/pyth/lib/wallet.tsx` and saved the file, the Next.js development server will reload the page. Provided that you've correctly set the keypair into the app state, you will be able to proceed to the next step 🚀
+Once you've completed the code in `components/protocols/pyth/lib/wallet.tsx` and saved the file, the Next.js development server will reload the page. Provided that you've correctly set the keypair into the app state by pasting it into the input on the **live wallet**, you will be able to proceed to the next step 🚀
 
 ---
 

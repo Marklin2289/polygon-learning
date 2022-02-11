@@ -28,16 +28,17 @@ const ChartMock = () => {
     price,
   );
 
-  // Amount of EMA to buy/sell signal.
+  // yieldExpectation is the amount of EMA to buy/sell signal
   const [yieldExpectation, setYield] = useState<number>(0.001);
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
   const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    // Set ordersize Amount in Sol respect to USDC.
-    setOrderSizeSOL(orderSizeUSDC / price!);
-  }, [price, orderSizeUSDC, setPrice]);
+    dispatch({
+      type: 'SetIsCompleted',
+    });
+  }, [price]);
 
   useEffect(() => {
     signalListener.once('*', () => {
@@ -112,7 +113,8 @@ const ChartMock = () => {
             newData.sma = sum / window;
 
             const previousEma = newData.ema || newData.sma;
-            const currentEma = undefined;
+            const currentEma =
+              (newData.price - previousEma) * smoothingFactor + previousEma;
             newData.ema = currentEma;
 
             /**
@@ -126,15 +128,11 @@ const ChartMock = () => {
              */
             const trend = newData.ema / data[data.length - 1].ema;
             if (trend * 100 > 100 + yieldExpectation) {
-              undefined;
+              signalListener.emit('buy');
             } else if (trend * 100 < 100 - yieldExpectation) {
-              undefined;
+              signalListener.emit('sell');
             }
           }
-
-          dispatch({
-            type: 'SetIsCompleted',
-          });
 
           return [...data, newData];
         });

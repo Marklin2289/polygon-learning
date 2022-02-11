@@ -23,7 +23,7 @@ You can try out the complete liquidation bot using the mock wallet and mock swap
 
 # ✅ Make sure it works
 
-Before turning on the price feed, be sure to switch to the **mock wallet**. If the keypair doesn't have both SOL and USDC balances, the liquidation bot will fail to perform its assigned task. Remember to reset the wallet balances after switching back to the mock wallet.
+Before turning on the price feed, be sure to have some ORCA tokens. Otherwise, the liquidation bot will fail to perform its assigned task because it will get hung up trying to swap an exact amount. Without some extra ORCA to pay for the pool fees, failed swaps will start piling up.
 
 Armed and ready? Now it's time to toggle the price feed on and watch the liquidation bot go to work!
 

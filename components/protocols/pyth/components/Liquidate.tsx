@@ -29,6 +29,7 @@ import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
 import {
   SOL_DECIMAL,
   USDC_DECIMAL,
+  ORCA_DECIMAL,
   useExtendedWallet,
   Order,
 } from '@figment-pyth/lib/wallet';
@@ -68,38 +69,25 @@ const Liquidate = () => {
 
   /**
    * The useEffect below will be triggered whenever the cluster changes.
-   * It will display a sticky notification (duration: 0) for mainnet-beta,
+   * It will display a notification (duration: 5 seconds) for mainnet-beta,
    * while the devnet notification will only be shown for 3 seconds.
-   * The mainnet-beta notification can be dismissed by clicking the button
-   * defined in btn.
    *
-   *  The dependency array contains cluster.
+   * The dependency array contains cluster.
    */
   useEffect(() => {
-    const btn = (
-      <Button
-        style={{backgroundColor: '#000'}}
-        type="primary"
-        size="small"
-        onClick={() => notification.close(key)}
-      >
-        I acknowledge the risks and want to proceed
-      </Button>
-    );
     const key = `open${Date.now()}`;
     if (cluster === SOLANA_NETWORKS.MAINNET) {
       notification.warn({
-        message: 'WARNING!',
-        description: 'Swaps on mainnet-beta use real funds ⚠️',
-        btn,
+        message: 'MAINNET',
+        description: 'WARNING! Swaps on mainnet-beta use real funds ⚠️',
         key,
         duration: 5,
       });
     } else if (cluster === SOLANA_NETWORKS.DEVNET) {
       notification.info({
-        message: 'On devnet ✅',
-        description: 'Swaps on devnet are not functional!',
-        duration: 3,
+        message: 'DEVNET',
+        description: 'Swaps on devnet do not use real funds ✅',
+        duration: 2,
       });
     }
   }, [cluster]);
@@ -343,6 +331,15 @@ const Liquidate = () => {
                 />
               </Col>
 
+              {useLive ? (
+                <Col span={12}>
+                  <Statistic
+                    value={balance?.orca_balance / ORCA_DECIMAL}
+                    title={'ORCA'}
+                  />
+                </Col>
+              ) : null}
+
               <Col span={12}>
                 <Statistic
                   value={worth.current.toFixed(4)}
@@ -428,7 +425,7 @@ const Liquidate = () => {
                       {txIds.map((txId: string) => (
                         <a
                           // @ts-ignore
-                          href={`https://solscan.io/tx/${txId}`}
+                          href={`https://solscan.io/tx/${txId}?cluster=${cluster}`}
                           key={txId}
                           target={'_blank'}
                           rel="noreferrer"
@@ -495,7 +492,7 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
   return (
     <Card bordered={false}>
       <Row>
-        <Col span={6}>
+        <Col span={8}>
           <Input.Group compact>
             <InputNumber
               min={0}
@@ -517,7 +514,9 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
             </Button>
           </Input.Group>
         </Col>
-        <Col span={6}>
+        <br />
+        <br />
+        <Col span={8}>
           <Input.Group compact>
             <InputNumber
               min={0}
@@ -543,5 +542,4 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
     </Card>
   );
 };
-
 export default Liquidate;

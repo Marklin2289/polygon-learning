@@ -19,6 +19,7 @@ import {SOLANA_NETWORKS} from 'types/index';
 import {
   SOL_DECIMAL,
   USDC_DECIMAL,
+  ORCA_DECIMAL,
   useExtendedWallet,
 } from '@figment-pyth/lib/wallet';
 import _ from 'lodash';
@@ -31,7 +32,7 @@ const Wallet = () => {
 
   const [useLive, setUseLive] = useState(false);
   const [price, setPrice] = useState<number | undefined>(undefined);
-  const {setSecretKey, keyPair, balance, resetWallet, worth} =
+  const {setSecretKey, secretKey, keyPair, balance, resetWallet, worth} =
     useExtendedWallet(useLive, cluster, price);
 
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
@@ -46,27 +47,27 @@ const Wallet = () => {
     const key = `open${Date.now()}`;
     if (cluster === SOLANA_NETWORKS.MAINNET) {
       notification.warn({
-        message: 'WARNING!',
-        description: 'Swaps on mainnet-beta use real funds ⚠️',
+        message: 'MAINNET',
+        description: 'WARNING! Swaps on mainnet-beta use real funds ⚠️',
         key,
         duration: 5,
       });
     } else if (cluster === SOLANA_NETWORKS.DEVNET) {
       notification.info({
-        message: 'On devnet ✅',
-        description: 'Swaps on devnet are not functional!',
+        message: 'DEVNET',
+        description: 'Swaps on devnet do not use real funds ✅',
         duration: 2,
       });
     }
   }, [cluster]);
 
   useEffect(() => {
-    if (cluster == 'mainnet-beta') {
+    if (secretKey) {
       dispatch({
         type: 'SetIsCompleted',
       });
     }
-  }, [price, orderSizeUSDC, setPrice]);
+  }, [secretKey]);
 
   useEffect(() => {
     signalListener.once('*', () => {
@@ -147,6 +148,15 @@ const Wallet = () => {
                     title={'USDC'}
                   />
                 </Col>
+
+                {useLive ? (
+                  <Col span={12}>
+                    <Statistic
+                      value={balance?.orca_balance / ORCA_DECIMAL}
+                      title={'ORCA'}
+                    />
+                  </Col>
+                ) : null}
 
                 <Col span={12}>
                   <Statistic

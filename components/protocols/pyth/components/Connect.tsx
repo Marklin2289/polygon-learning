@@ -3,7 +3,8 @@ import {useGlobalState} from 'context';
 import {SyncOutlined} from '@ant-design/icons';
 import {useEffect, useState} from 'react';
 import Confetti from 'react-confetti';
-import {clusterApiUrl, Connection} from '@solana/web3.js';
+import {clusterApiUrl, Connection, Keypair} from '@solana/web3.js';
+import bip39 from 'bip39';
 import {PythConnection, getPythProgramKeyForCluster} from '@pythnetwork/client';
 import {pythMarketExplorer} from '../lib/index';
 import {
@@ -16,8 +17,8 @@ import {PYTH_NETWORKS, SOLANA_NETWORKS} from 'types/index';
 const {Title} = Typography;
 
 const connection = new Connection(clusterApiUrl(SOLANA_NETWORKS.DEVNET));
-const pythPublicKey = undefined;
-const pythConnection = undefined;
+const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
+const pythConnection = new PythConnection(connection, pythPublicKey);
 
 const Connect = () => {
   const {state, dispatch} = useGlobalState();
@@ -43,9 +44,12 @@ const Connect = () => {
         price.price &&
         price.confidence
       ) {
-        console.log(
-          `${product.symbol}: $${price.price} \xB1$${price.confidence}`,
-        );
+        // Console logging at the frequency Pyth updates
+        // will likely cause significant lag in the browser!
+        // Sample output: Crypto.SOL/USD: $108.932958 ±$0.3174755
+        // console.log(
+        //   `${product.symbol}: $${price.price} \xB1$${price.confidence}`,
+        // );
         setSymbol('Crypto.SOL/USD');
         setPrice(price.price);
         setConfidence(price.confidence);
@@ -100,9 +104,10 @@ const Connect = () => {
           {price && fetching && (
             <>
               <Confetti
-                numberOfPieces={150}
-                tweenDuration={1000}
-                gravity={0.05}
+                confettiSource={{x: 325, y: 125, w: 100, h: 200}}
+                numberOfPieces={10}
+                tweenDuration={200}
+                gravity={0.25}
                 recycle={false}
               />
             </>

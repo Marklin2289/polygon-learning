@@ -1,6 +1,6 @@
 # 🤨 What are we building, here?
 
-Using price data from Pyth, we are going to build a minimum viable product ("MVP") which supports automating the task of swapping between SOL and USDC tokens using a decentralized exchange ("DEX"). The goal is to be able to buy when the price is low and sell when the price is high. There are several ways of referring to this behavior, but for the purposes of this Pathway we will refer to the MVP as a "liquidation bot".
+Using price data from Pyth as the foundation, we are going to build a minimum viable product ("MVP") which supports automating the task of swapping between SOL and USDC tokens using a decentralized exchange ("DEX"). The goal is to be able to buy when the price is low and sell when the price is high. There are several ways of referring to this behavior, but for the purposes of this Pathway we will refer to the MVP as a "liquidation bot".
 
 To complete this project, we must implement the following:
 

@@ -6,12 +6,13 @@ import _, {initial} from 'lodash';
 import {useCallback, useEffect, useState} from 'react';
 import useSWR from 'swr';
 import {SOLANA_NETWORKS} from 'types';
-import {JupiterSwapClient, SwapResult} from './swap';
+import {JupiterSwapClient, OrcaSwapClient, SwapResult} from './swap';
 import {useLocalStorage} from './useLocalStorage';
 
 interface WalletBalance {
   sol_balance: number;
   usdc_balance: number;
+  orca_balance: number;
 }
 
 export interface Order {
@@ -24,10 +25,14 @@ export interface Order {
 export const SERUM_RPC_URL = 'https://solana-api.projectserum.com/';
 
 const SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
-const USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const DEVNET_USDC_MINT_ADDRESS = 'EmXq3Ni9gfudTiyNKzzYvpnQqnJEMRw2ttnVXoJXjLo1';
+const MAINNET_USDC_MINT_ADDRESS =
+  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const ORCA_MINT_ADDRESS = 'orcarKHSqC5CDDsGbho8GKvwExejWHxTqGzXgcewB9L';
 
 export const SOL_DECIMAL = 10 ** 9;
 export const USDC_DECIMAL = 10 ** 6;
+export const ORCA_DECIMAL = 10 ** 6;
 
 export const useExtendedWallet = (
   useLive = false,
@@ -38,8 +43,8 @@ export const useExtendedWallet = (
   const [keyPair, setKeyPair] = useState<Keypair>(Keypair.generate());
   useEffect(() => {
     if (secretKey) {
-      let arr = undefined;
-      const key = undefined;
+      let array = Uint8Array.from(bs58.decode(secretKey));
+      const key = Keypair.fromSecretKey(array);
       setKeyPair(key);
     } else {
       const temp = Keypair.generate(); // The mock uses a random keypair to be able to get real market data.
@@ -50,6 +55,7 @@ export const useExtendedWallet = (
   const [balance, setBalance] = useState<WalletBalance>({
     sol_balance: 10 * SOL_DECIMAL,
     usdc_balance: 1400 * USDC_DECIMAL,
+    orca_balance: 0 * ORCA_DECIMAL, // ORCA token is only used on devnet
   });
 
   // State for tracking user worth with current Market Price.
@@ -119,9 +125,44 @@ export const useExtendedWallet = (
         'data[1].result.value[0]account.data.parsed.info.tokenAmount.amount',
         0,
       );
-      setBalance({sol_balance, usdc_balance});
+      const orca_balance = _.get(
+        data,
+        'data[2].result.value[0]account.data.parsed.info.tokenAmount.amount',
+        0,
+      );
+      setBalance({sol_balance, usdc_balance, orca_balance});
     }
   }, [data]);
+
+  /**
+   *  Since jup.ag does not support devnet yet, we'll use Orca for devnet swaps.
+   */
+  const [orcaSwapClient, setOrcaSwapClient] = useState<OrcaSwapClient | null>(
+    null,
+  );
+
+  // useEffect(() => {
+  //   (async function _init(): Promise<void> {
+  //     console.log('Keypair changed to: ', keyPair?.publicKey.toBase58());
+  //     console.log('setting up clients');
+  //     setJupiterSwapClient(null);
+  //     setOrcaSwapClient(null);
+  //     await getOrcaSwapClient();
+  //     await getJupiterSwapClient();
+  //     console.log('clients initialized');
+  //   })();
+  // }, [keyPair]);
+
+  const getOrcaSwapClient = async () => {
+    console.log('setting up orca client');
+    if (orcaSwapClient) return orcaSwapClient;
+    const _orcaSwapClient = new OrcaSwapClient(
+      keyPair,
+      new Connection(clusterApiUrl('devnet'), 'confirmed'),
+    );
+    setOrcaSwapClient((c) => _orcaSwapClient);
+    return _orcaSwapClient;
+  };
 
   /**
    * The Jupiter SDK gives access to 10+ DEXes with more than 6bn in liquidity, allowing developers to find the best swap route with a simple API call.
@@ -138,7 +179,7 @@ export const useExtendedWallet = (
       SOLANA_NETWORKS.MAINNET,
       keyPair,
       SOL_MINT_ADDRESS,
-      USDC_MINT_ADDRESS,
+      MAINNET_USDC_MINT_ADDRESS,
     );
     setJupiterSwapClient((c) => _jupiterSwapClient);
     return _jupiterSwapClient;
@@ -196,7 +237,23 @@ export const useExtendedWallet = (
         result = await addMockOrder(order);
       } else if (useLive) {
         if (cluster === 'devnet') {
-          console.log('devnet swaps are not supported by Jupiter');
+          const _orcaClient = await getOrcaSwapClient();
+          if (order.side === 'buy') {
+            result = await _orcaClient?.buy(order.size)!;
+            console.log('result:', result);
+          } else if (order.side === 'sell') {
+            if (order.toToken === 'ORCA') {
+              console.log(_orcaClient);
+              result = await _orcaClient?.sell_to_orca(order.size)!;
+              console.log('result:', result);
+            } else if (order.toToken === 'USDC') {
+              console.log(_orcaClient);
+              result = await _orcaClient?.sell(order.size)!;
+              console.log('result:', result);
+            }
+          } else {
+            console.log('Impossible!');
+          }
         } else if (cluster === 'mainnet-beta') {
           console.log(jupiterSwapClient?.keypair.publicKey.toString());
           const _jupiterSwapClient = await getJupiterSwapClient();
@@ -218,13 +275,16 @@ export const useExtendedWallet = (
     [useLive, cluster, keyPair],
   );
 
-  const resetWallet = (params = {sol_balance: 10, usdc_balance: 1400}) => {
+  const resetWallet = (
+    params = {sol_balance: 10, usdc_balance: 1400, orca_balance: 0},
+  ) => {
     if (useLive) {
       setSecretKey('');
     } else {
       setBalance({
         sol_balance: params.sol_balance * SOL_DECIMAL,
         usdc_balance: params.usdc_balance * USDC_DECIMAL,
+        orca_balance: params.orca_balance * ORCA_DECIMAL,
       });
       updateCurrentWorth(true);
     }
@@ -235,6 +295,7 @@ export const useExtendedWallet = (
     resetWallet,
     keyPair,
     setSecretKey,
+    secretKey,
     addOrder,
     orderBook,
     worth,
@@ -242,8 +303,9 @@ export const useExtendedWallet = (
 };
 
 const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
+  // @ts-ignore
   axios({
-    url: cluster === 'mainnet-beta' ? clusterApiUrl(cluster) : SERUM_RPC_URL,
+    url: cluster === 'devnet' ? clusterApiUrl(cluster) : SERUM_RPC_URL,
     method: 'post',
     headers: {'Content-Type': 'application/json'},
     data: [
@@ -260,7 +322,24 @@ const balanceFetcher = (keyPair: Keypair, cluster: Cluster) => () =>
         params: [
           keyPair?.publicKey.toBase58(),
           {
-            mint: USDC_MINT_ADDRESS,
+            mint:
+              cluster === 'devnet'
+                ? DEVNET_USDC_MINT_ADDRESS
+                : MAINNET_USDC_MINT_ADDRESS,
+          },
+          {
+            encoding: 'jsonParsed',
+          },
+        ],
+      },
+      {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'getTokenAccountsByOwner', // https://docs.solana.com/developing/clients/jsonrpc-api#gettokenaccountsbyowner
+        params: [
+          keyPair?.publicKey.toBase58(),
+          {
+            mint: ORCA_MINT_ADDRESS, // Required as a midway swap token for devnet swaps using Orca.
           },
           {
             encoding: 'jsonParsed',
