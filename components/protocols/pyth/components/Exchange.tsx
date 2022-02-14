@@ -13,6 +13,7 @@ import {
   Tag,
   notification,
   Tooltip,
+  Alert,
 } from 'antd';
 import {useGlobalState} from 'context';
 import {DollarCircleFilled, ArrowRightOutlined} from '@ant-design/icons';
@@ -29,6 +30,8 @@ import {
   useExtendedWallet,
 } from '@figment-pyth/lib/wallet';
 import * as Rx from 'rxjs';
+import useBreakpoint from 'antd/lib/grid/hooks/useBreakpoint';
+import {DevnetPriceRatio} from './DevnetPriceRatio';
 
 const connection = new Connection(
   clusterApiUrl(PYTH_NETWORKS.DEVNET),
@@ -53,6 +56,7 @@ const Exchange = () => {
     orderBook,
     resetWallet,
     worth,
+    devnetToMainnetPriceRatioRef,
   } = useExtendedWallet(useLive, cluster, price);
 
   // yieldExpectation is the amount of EMA to buy/sell signal
@@ -364,6 +368,11 @@ const Exchange = () => {
             </Row>
           </Card>
         </Space>
+        {useLive && cluster === 'devnet' && (
+          <DevnetPriceRatio
+            devnetToMainnetPriceRatioRef={devnetToMainnetPriceRatioRef}
+          />
+        )}
         <Card>
           <BuySellControllers addOrder={addOrder} />
           <Statistic value={orderBook.length} title={'Number of Operations'} />

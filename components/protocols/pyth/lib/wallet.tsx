@@ -1,5 +1,6 @@
 import {Cluster, clusterApiUrl, Connection} from '@solana/web3.js';
 import {Keypair} from '@solana/web3.js';
+import {message} from 'antd';
 import axios from 'axios';
 import bs58 from 'bs58';
 import _, {initial} from 'lodash';
@@ -229,6 +230,15 @@ export const useExtendedWallet = (
     return result;
   };
 
+  const [devnetToMainnetPriceRatioRef, setDevnetToMainnetPriceRatioRef] =
+    useState<{
+      sol_usdc: number;
+      usdc_sol: number;
+    }>({
+      sol_usdc: 1,
+      usdc_sol: 1,
+    });
+
   const addOrder = useCallback(
     async (order: Order) => {
       console.log('addOrder', useLive, order, cluster);
@@ -240,6 +250,12 @@ export const useExtendedWallet = (
           const _orcaClient = await getOrcaSwapClient();
           if (order.side === 'buy') {
             result = await _orcaClient?.buy(order.size)!;
+            const inAmountHumanReadable = result.inAmount / USDC_DECIMAL;
+            const outAmountHumanReadable = result.outAmount / SOL_DECIMAL;
+            setDevnetToMainnetPriceRatioRef((prev) => ({
+              ...prev,
+              usdc_sol: inAmountHumanReadable / outAmountHumanReadable,
+            }));
             console.log('result:', result);
           } else if (order.side === 'sell') {
             if (order.toToken === 'ORCA') {
@@ -247,8 +263,13 @@ export const useExtendedWallet = (
               result = await _orcaClient?.sell_to_orca(order.size)!;
               console.log('result:', result);
             } else if (order.toToken === 'USDC') {
-              console.log(_orcaClient);
               result = await _orcaClient?.sell(order.size)!;
+              const inAmountHumanReadable = result.inAmount / SOL_DECIMAL;
+              const outAmountHumanReadble = result.outAmount / USDC_DECIMAL;
+              setDevnetToMainnetPriceRatioRef((prev) => ({
+                ...prev,
+                sol_usdc: inAmountHumanReadable / outAmountHumanReadble,
+              }));
               console.log('result:', result);
             }
           } else {
@@ -272,7 +293,7 @@ export const useExtendedWallet = (
 
       mutate(); // Refresh balance
     },
-    [useLive, cluster, keyPair],
+    [useLive, cluster, keyPair, devnetToMainnetPriceRatioRef],
   );
 
   const resetWallet = (
@@ -299,6 +320,7 @@ export const useExtendedWallet = (
     addOrder,
     orderBook,
     worth,
+    devnetToMainnetPriceRatioRef,
   };
 };
 
