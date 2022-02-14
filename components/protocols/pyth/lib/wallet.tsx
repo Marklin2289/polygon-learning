@@ -1,6 +1,5 @@
 import {Cluster, clusterApiUrl, Connection} from '@solana/web3.js';
 import {Keypair} from '@solana/web3.js';
-import {message} from 'antd';
 import axios from 'axios';
 import bs58 from 'bs58';
 import _, {initial} from 'lodash';
@@ -56,7 +55,7 @@ export const useExtendedWallet = (
   const [balance, setBalance] = useState<WalletBalance>({
     sol_balance: 10 * SOL_DECIMAL,
     usdc_balance: 1400 * USDC_DECIMAL,
-    orca_balance: 0 * ORCA_DECIMAL, // ORCA token is only used on devnet
+    orca_balance: 0 * ORCA_DECIMAL, // ORCA token is only used on devnet.
   });
 
   // State for tracking user worth with current Market Price.
@@ -90,7 +89,7 @@ export const useExtendedWallet = (
     return (initial / current) * 100 - 100;
   };
 
-  // update the current worth each price update.
+  // Update the current worth when price changes.
   useEffect(() => {
     if (price) {
       if (worth.initial === 0) {
@@ -142,18 +141,6 @@ export const useExtendedWallet = (
     null,
   );
 
-  // useEffect(() => {
-  //   (async function _init(): Promise<void> {
-  //     console.log('Keypair changed to: ', keyPair?.publicKey.toBase58());
-  //     console.log('setting up clients');
-  //     setJupiterSwapClient(null);
-  //     setOrcaSwapClient(null);
-  //     await getOrcaSwapClient();
-  //     await getJupiterSwapClient();
-  //     console.log('clients initialized');
-  //   })();
-  // }, [keyPair]);
-
   const getOrcaSwapClient = async () => {
     console.log('setting up orca client');
     if (orcaSwapClient) return orcaSwapClient;
@@ -188,14 +175,11 @@ export const useExtendedWallet = (
 
   const addMockOrder = async (order: Order): Promise<SwapResult> => {
     const _jupiterSwapClient = await getJupiterSwapClient();
-
-    // TokenA === SOL
-    // TokenB === USDC
     const routes = await _jupiterSwapClient?.getRoutes({
       inputToken:
         order.side === 'buy'
-          ? _jupiterSwapClient.tokenB
-          : _jupiterSwapClient.tokenA,
+          ? _jupiterSwapClient.tokenB // TokenB === USDC
+          : _jupiterSwapClient.tokenA, // TokenA === SOL
       outputToken:
         order.side === 'buy'
           ? _jupiterSwapClient.tokenA
@@ -265,10 +249,10 @@ export const useExtendedWallet = (
             } else if (order.toToken === 'USDC') {
               result = await _orcaClient?.sell(order.size)!;
               const inAmountHumanReadable = result.inAmount / SOL_DECIMAL;
-              const outAmountHumanReadble = result.outAmount / USDC_DECIMAL;
+              const outAmountHumanReadable = result.outAmount / USDC_DECIMAL;
               setDevnetToMainnetPriceRatioRef((prev) => ({
                 ...prev,
-                sol_usdc: inAmountHumanReadable / outAmountHumanReadble,
+                sol_usdc: inAmountHumanReadable / outAmountHumanReadable,
               }));
               console.log('result:', result);
             }
@@ -291,7 +275,7 @@ export const useExtendedWallet = (
         setOrderbook((_orderBook) => [extendedOrder, ..._orderBook]);
       }
 
-      mutate(); // Refresh balance
+      mutate(); // Refresh balance.
     },
     [useLive, cluster, keyPair, devnetToMainnetPriceRatioRef],
   );
