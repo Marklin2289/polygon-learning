@@ -142,13 +142,13 @@ export const useExtendedWallet = (
   );
 
   const getOrcaSwapClient = async () => {
-    console.log('setting up orca client');
+    console.log('setting up Orca client');
     if (orcaSwapClient) return orcaSwapClient;
     const _orcaSwapClient = new OrcaSwapClient(
       keyPair,
-      new Connection(clusterApiUrl('devnet'), 'confirmed'),
+      new Connection(clusterApiUrl('devnet'), 'singleGossip'),
     );
-    setOrcaSwapClient((c) => _orcaSwapClient);
+    setOrcaSwapClient(_orcaSwapClient);
     return _orcaSwapClient;
   };
 
@@ -233,17 +233,22 @@ export const useExtendedWallet = (
         if (cluster === 'devnet') {
           const _orcaClient = await getOrcaSwapClient();
           if (order.side === 'buy') {
-            result = await _orcaClient?.buy(order.size)!;
-            const inAmountHumanReadable = result.inAmount / USDC_DECIMAL;
-            const outAmountHumanReadable = result.outAmount / SOL_DECIMAL;
-            setDevnetToMainnetPriceRatioRef((prev) => ({
-              ...prev,
-              usdc_sol: inAmountHumanReadable / outAmountHumanReadable,
-            }));
-            console.log('result:', result);
+            if (order.fromToken === 'ORCA') {
+              result = await _orcaClient?.buy_from_orca(order.size)!;
+              console.log('result:', result);
+            } else {
+              result = await _orcaClient?.buy(order.size)!;
+              const inAmountHumanReadable = result.inAmount / USDC_DECIMAL;
+              const outAmountHumanReadable = result.outAmount / SOL_DECIMAL;
+              setDevnetToMainnetPriceRatioRef((prev) => ({
+                ...prev,
+                usdc_sol: inAmountHumanReadable / outAmountHumanReadable,
+              }));
+              console.log('result:', result);
+            }
           } else if (order.side === 'sell') {
             if (order.toToken === 'ORCA') {
-              console.log(_orcaClient);
+              // console.log(_orcaClient);
               result = await _orcaClient?.sell_to_orca(order.size)!;
               console.log('result:', result);
             } else if (order.toToken === 'USDC') {

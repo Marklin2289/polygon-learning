@@ -44,9 +44,14 @@ const pythConnection = new PythConnection(connection, pythPublicKey);
 const signalListener = new EventEmitter();
 
 const Liquidate = () => {
+  type orderSizeMultipleCluster = {
+    mainnet: number;
+    devnet: number;
+  };
+
+  const [symbol, setSymbol] = useState<string | undefined>(undefined);
   const {state, dispatch} = useGlobalState();
   const [cluster, setCluster] = useState<Cluster>('devnet');
-
   const [useLive, setUseLive] = useState(true);
   const [price, setPrice] = useState<number | undefined>(undefined);
   const {
@@ -59,25 +64,19 @@ const Liquidate = () => {
     worth,
     devnetToMainnetPriceRatioRef,
   } = useExtendedWallet(useLive, cluster, price);
-  // yield is the amount of EMA to trigger a buy/sell signal.
+
+  // Yield is the amount of EMA to trigger a buy/sell signal.
   const [yieldExpectation, setYield] = useState<number>(0.001);
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<orderSizeMultipleCluster>({
     mainnet: 20,
     devnet: 20,
   }); // USDC
-  type orderSizeMultipleCluster = {
-    mainnet: number;
-    devnet: number;
-  };
-
   const [orderSizeSOL, setOrderSizeSOL] = useState<orderSizeMultipleCluster>({
     mainnet: 0.14,
     devnet: 0.14,
   }); // SOL
 
-  const [symbol, setSymbol] = useState<string | undefined>(undefined);
-
-  // Shorten the public key for display purposes
+  // Shorten the public key for display purposes.
   const displayAddress = `${keyPair.publicKey
     .toString()
     .slice(0, 6)}...${keyPair.publicKey.toString().slice(38, 44)}`;
@@ -111,16 +110,16 @@ const Liquidate = () => {
    *  The useEffect below will set the pathway step as completed once price data is fetched.
    *  It will also use setWorth to update the current worth on every price update.
    *
-   *  The dependency array contains price, orderSizeUSDC and setPrice.
+   *  The dependency array contains price, orderSizeUSDC.mainnet, setPrice and orderBook.length.
    */
   useEffect(() => {
     if (price) {
       dispatch({
         type: 'SetIsCompleted',
       });
-      // Set ordersize Amount in Sol respect to USDC.
+      // Set order size amounts, respecting devnet price ratio difference.
       const orderSizeRatio = orderSizeUSDC.mainnet / price;
-      setOrderSizeSOL((sizes) => ({
+      setOrderSizeSOL(() => ({
         devnet: orderSizeRatio / devnetToMainnetPriceRatioRef.sol_usdc,
         mainnet: orderSizeUSDC.mainnet / price!,
       }));
@@ -137,25 +136,25 @@ const Liquidate = () => {
    *  send a buy or sell order based on the sum being positive or negative.
    *
    *  The dependency array contains yieldExpectation, orderSizeUSDC, orderSizeSOL,
-   *  useMock, cluster & keyPair.
+   *  useLive, cluster & keyPair.
    */
   useEffect(() => {
     signalListener.once('*', () => {
       resetWallet();
     });
-    const buy = Rx.fromEvent(signalListener, 'buy').pipe(Rx.mapTo(1)); // for reduce sum function to understand the operation.
-    const sell = Rx.fromEvent(signalListener, 'sell').pipe(Rx.mapTo(-1)); // for reduce sum function to understand the operation.
+    const buy = Rx.fromEvent(signalListener, 'buy').pipe(Rx.mapTo(1)); // For reduce sum function to understand the operation.
+    const sell = Rx.fromEvent(signalListener, 'sell').pipe(Rx.mapTo(-1)); // For reduce sum function to understand the operation.
     Rx.merge(buy, sell)
       .pipe(
         Rx.tap((v: any) => console.log(v)),
-        Rx.bufferTime(10000), // wait 10 second.
+        Rx.bufferTime(10000), // Wait 10 seconds.
         Rx.map((orders: number[]) => {
-          return orders.reduce((prev, curr) => prev + curr, 0); // sum of the orders in the buffer.
+          return orders.reduce((prev, curr) => prev + curr, 0); // Sum of the orders in the buffer.
         }),
-        Rx.filter((v) => v !== 0), // if we have equivalent signals, don't add any orders.
+        Rx.filter((v) => v !== 0), // If we have equivalent signals, don't add any orders.
         Rx.map((val: number) => {
           if (val > 0) {
-            // buy.
+            // Buy.
             const orderSizeSupposedTo =
               val *
               (cluster === 'devnet'
@@ -172,6 +171,7 @@ const Liquidate = () => {
               toToken: 'sol',
             };
           } else if (val <= 0) {
+            // Sell.
             const orderSizeSupposedTo =
               Math.abs(val) *
               (cluster === 'devnet'
@@ -189,10 +189,10 @@ const Liquidate = () => {
             };
           }
         }),
-        Rx.debounceTime(5000), //throttle the orders to be sent every 5.
+        Rx.debounceTime(20000), // Throttle the orders to be sent every 20 seconds.
       )
-      .subscribe(async (v: any) => {
-        await addOrder({
+      .subscribe((v: any) => {
+        addOrder({
           ...v,
           cluster,
         });
@@ -222,9 +222,9 @@ const Liquidate = () => {
         price.price &&
         price.confidence
       ) {
-        console.log(
-          `${product.symbol}: $${price.price} \xB1$${price.confidence}`,
-        );
+        // console.log(
+        //   `${product.symbol}: $${price.price} \xB1$${price.confidence}`,
+        // );
         setPrice(price.price);
 
         const newData: {
@@ -433,13 +433,13 @@ const Liquidate = () => {
         </Card>
         <Card>
           <BuySellControllers addOrder={addOrder} />
-          <Card title={'Yield Expectation'} size={'small'} bordered={false}>
+
+          <Card size={'small'} bordered={false}>
             <Descriptions title="Bot Order Settings ⚙️" bordered>
-              <Descriptions.Item label="Yield Expectation" span={2}>
+              <Descriptions.Item label="Yield Expectation %" span={2}>
                 <InputNumber
                   value={yieldExpectation}
                   onChange={(e) => setYield(e)}
-                  prefix="%"
                 />
               </Descriptions.Item>
               <Descriptions.Item label="Order size USDC" span={2}>
@@ -448,17 +448,18 @@ const Liquidate = () => {
                   onChange={(e) =>
                     setOrderSizeUSDC((sizes) => ({...sizes, mainnet: e}))
                   }
-                  prefix="USDC"
-                  placeholder="Amount of USDC to buy"
-                  style={{width: 200}}
                 />
               </Descriptions.Item>
-              <Descriptions.Item label={'Order size SOL'} span={2}>
-                {orderSizeSOL.mainnet}
-              </Descriptions.Item>
-              <Descriptions.Item label={'Order size USDC'} span={2}>
-                {orderSizeUSDC.mainnet}
-              </Descriptions.Item>
+              {cluster === 'mainnet-beta' && (
+                <>
+                  <Descriptions.Item label={'Order size SOL'} span={2}>
+                    {orderSizeSOL.mainnet}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={'Order size USDC'} span={2}>
+                    {orderSizeUSDC.mainnet}
+                  </Descriptions.Item>
+                </>
+              )}
               {cluster === 'devnet' && (
                 <>
                   <Descriptions.Item
@@ -466,7 +467,7 @@ const Liquidate = () => {
                     label={'Order size in Devnet SOL'}
                     contentStyle={{background: 'yellow'}}
                   >
-                    {orderSizeSOL.devnet}
+                    {orderSizeSOL.devnet.toFixed(8)}
                   </Descriptions.Item>
                   <Descriptions.Item
                     span={2}
@@ -479,14 +480,17 @@ const Liquidate = () => {
               )}
             </Descriptions>
           </Card>
+
           <Space direction="vertical" size="large">
             <br />
           </Space>
           <Statistic
-            value={orderBook.length}
             title={'Order Book Total Transactions'}
+            value={orderBook.length}
           />
           <Table
+            key="book"
+            rowKey="body"
             dataSource={orderBook}
             columns={[
               {
@@ -504,7 +508,8 @@ const Liquidate = () => {
                           target={'_blank'}
                           rel="noreferrer"
                         >
-                          {txId?.substring(-1, 5)}
+                          {txId?.substring(-1, 8)}
+                          <br />
                         </a>
                       ))}
                     </>
@@ -561,22 +566,51 @@ const Liquidate = () => {
 const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
   addOrder,
 }) => {
-  const [buySize, setBuySize] = useState(8);
-  const [sellSize, setSellSize] = useState(0.1);
+  const [buySize, setBuySize] = useState<number>(0.01);
+  const [sellSize, setSellSize] = useState<number>(0.1);
+  const [sellSOLToOrcaSize, setSellSOLToOrcaSize] = useState<number>(0.1);
+  const [sellOrcaToSOLSize, setSellOrcaToSOLSize] = useState<number>(0.1);
   return (
     <Card bordered={false}>
       <Row>
-        <Col span={8}>
+        <Col span={10}>
           <Input.Group compact>
             <InputNumber
+              step={0.1}
+              min={0}
+              value={sellSOLToOrcaSize}
+              onChange={(val) => setSellSOLToOrcaSize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={() =>
+                addOrder({
+                  side: 'sell',
+                  size: sellSOLToOrcaSize,
+                  fromToken: 'SOL',
+                  toToken: 'ORCA',
+                })
+              }
+            >
+              SOL -&gt; ORCA
+            </Button>
+          </Input.Group>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={10}>
+          <br />
+          <Input.Group compact>
+            <InputNumber
+              step={0.1}
               min={0}
               value={sellSize}
               onChange={(val) => setSellSize(val)}
             />
             <Button
               type="primary"
-              onClick={async () =>
-                await addOrder({
+              onClick={() =>
+                addOrder({
                   side: 'sell',
                   size: sellSize,
                   fromToken: 'SOL',
@@ -584,23 +618,25 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
                 })
               }
             >
-              sell
+              SOL -&gt; USDC
             </Button>
           </Input.Group>
         </Col>
-        <br />
-        <br />
-        <Col span={8}>
+      </Row>
+      <Row>
+        <Col span={10}>
+          <br />
           <Input.Group compact>
             <InputNumber
+              step={0.1}
               min={0}
               value={buySize}
               onChange={(val) => setBuySize(val)}
             />
             <Button
               type="primary"
-              onClick={async () =>
-                await addOrder({
+              onClick={() =>
+                addOrder({
                   side: 'buy',
                   size: buySize,
                   fromToken: 'USDC',
@@ -608,7 +644,33 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
                 })
               }
             >
-              buy
+              USDC -&gt; SOL
+            </Button>
+          </Input.Group>
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col span={10}>
+          <Input.Group compact>
+            <InputNumber
+              step={0.1}
+              min={0}
+              value={sellOrcaToSOLSize}
+              onChange={(val) => setSellOrcaToSOLSize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={() =>
+                addOrder({
+                  side: 'buy',
+                  size: sellOrcaToSOLSize,
+                  fromToken: 'ORCA',
+                  toToken: 'SOL',
+                })
+              }
+            >
+              ORCA -&gt; SOL
             </Button>
           </Input.Group>
         </Col>
@@ -616,4 +678,5 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
     </Card>
   );
 };
+
 export default Liquidate;

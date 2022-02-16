@@ -13,7 +13,6 @@ import {
   Tag,
   notification,
   Tooltip,
-  Alert,
 } from 'antd';
 import {useGlobalState} from 'context';
 import {DollarCircleFilled, ArrowRightOutlined} from '@ant-design/icons';
@@ -30,7 +29,6 @@ import {
   useExtendedWallet,
 } from '@figment-pyth/lib/wallet';
 import * as Rx from 'rxjs';
-import useBreakpoint from 'antd/lib/grid/hooks/useBreakpoint';
 import {DevnetPriceRatio} from './DevnetPriceRatio';
 
 const connection = new Connection(
@@ -59,13 +57,13 @@ const Exchange = () => {
     devnetToMainnetPriceRatioRef,
   } = useExtendedWallet(useLive, cluster, price);
 
-  // yieldExpectation is the amount of EMA to buy/sell signal
+  // yieldExpectation is the amount of EMA to buy/sell signal.
   const [yieldExpectation, setYield] = useState<number>(0.001);
   const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
   const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
 
-  // Shorten the public key for display purposes
+  // Shorten the public key for display purposes.
   const displayAddress = `${keyPair.publicKey
     .toString()
     .slice(0, 6)}...${keyPair.publicKey.toString().slice(38, 44)}`;
@@ -109,11 +107,11 @@ const Exchange = () => {
     Rx.merge(buy, sell)
       .pipe(
         Rx.tap((v: any) => console.log(v)),
-        Rx.bufferTime(10000), // wait 10 second.
+        Rx.bufferTime(60000), // Wait 60 seconds.
         Rx.map((orders: number[]) => {
-          return orders.reduce((prev, curr) => prev + curr, 0); // sum of the orders in the buffer.
+          return orders.reduce((prev, curr) => prev + curr, 0); // Sum of the orders in the buffer.
         }),
-        Rx.filter((v) => v !== 0), // if we have equivalent signals, don't add any orders.
+        Rx.filter((v) => v !== 0), // If we have equivalent signals, don't add any orders.
         Rx.map((val: number) => {
           if (val > 0) {
             // buy.
@@ -344,7 +342,7 @@ const Exchange = () => {
                 <Statistic
                   value={worth.change.toFixed(4)}
                   prefix={'%'}
-                  title={'Change'}
+                  title={'CHANGE'}
                 />
               </Col>
             </Row>
@@ -377,6 +375,7 @@ const Exchange = () => {
           <BuySellControllers addOrder={addOrder} />
           <Statistic value={orderBook.length} title={'Number of Operations'} />
           <Table
+            key="body"
             dataSource={orderBook}
             columns={[
               {
@@ -450,45 +449,51 @@ const Exchange = () => {
 const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
   addOrder,
 }) => {
-  const [buySize, setBuySize] = useState<number>(0.1);
+  const [buySize, setBuySize] = useState<number>(0.01);
   const [sellSize, setSellSize] = useState<number>(0.1);
-  const [sellInitialSize, setSellInitialSize] = useState<number>(0.1);
+  const [sellSOLToOrcaSize, setSellSOLToOrcaSize] = useState<number>(0.1);
+  const [sellOrcaToSOLSize, setSellOrcaToSOLSize] = useState<number>(0.1);
   return (
     <Card bordered={false}>
       <Row>
-        <Input.Group compact>
-          <br />
-          <InputNumber
-            min={0}
-            value={sellSize}
-            onChange={(val) => setSellSize(val)}
-          />
-          <Button
-            type="primary"
-            onClick={async () =>
-              await addOrder({
-                side: 'sell',
-                size: sellSize,
-                fromToken: 'SOL',
-                toToken: 'ORCA',
-              })
-            }
-          >
-            SOL -&gt; ORCA
-          </Button>
-        </Input.Group>
-        <Col span={8}>
+        <Col span={10}>
+          <Input.Group compact>
+            <InputNumber
+              step={0.1}
+              min={0}
+              value={sellSOLToOrcaSize}
+              onChange={(val) => setSellSOLToOrcaSize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={() =>
+                addOrder({
+                  side: 'sell',
+                  size: sellSOLToOrcaSize,
+                  fromToken: 'SOL',
+                  toToken: 'ORCA',
+                })
+              }
+            >
+              SOL -&gt; ORCA
+            </Button>
+          </Input.Group>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={10}>
           <br />
           <Input.Group compact>
             <InputNumber
+              step={0.1}
               min={0}
               value={sellSize}
               onChange={(val) => setSellSize(val)}
             />
             <Button
               type="primary"
-              onClick={async () =>
-                await addOrder({
+              onClick={() =>
+                addOrder({
                   side: 'sell',
                   size: sellSize,
                   fromToken: 'SOL',
@@ -496,24 +501,25 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
                 })
               }
             >
-              sell
+              SOL -&gt; USDC
             </Button>
           </Input.Group>
         </Col>
-        <br />
-        <br />
-        <Col span={8}>
+      </Row>
+      <Row>
+        <Col span={10}>
           <br />
           <Input.Group compact>
             <InputNumber
+              step={0.1}
               min={0}
               value={buySize}
               onChange={(val) => setBuySize(val)}
             />
             <Button
               type="primary"
-              onClick={async () =>
-                await addOrder({
+              onClick={() =>
+                addOrder({
                   side: 'buy',
                   size: buySize,
                   fromToken: 'USDC',
@@ -521,7 +527,33 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
                 })
               }
             >
-              buy
+              USDC -&gt; SOL
+            </Button>
+          </Input.Group>
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col span={10}>
+          <Input.Group compact>
+            <InputNumber
+              step={0.1}
+              min={0}
+              value={sellOrcaToSOLSize}
+              onChange={(val) => setSellOrcaToSOLSize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={() =>
+                addOrder({
+                  side: 'buy',
+                  size: sellOrcaToSOLSize,
+                  fromToken: 'ORCA',
+                  toToken: 'SOL',
+                })
+              }
+            >
+              ORCA -&gt; SOL
             </Button>
           </Input.Group>
         </Col>

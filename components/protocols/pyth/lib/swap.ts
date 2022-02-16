@@ -20,6 +20,9 @@ import Decimal from 'decimal.js';
 import {SOL_DECIMAL, USDC_DECIMAL, ORCA_DECIMAL} from './wallet';
 import * as bs58 from 'bs58';
 
+// Set true for additional logging during the swap process.
+const logging = false;
+
 /**
  * Logging the Keypair object, you'll notice that the publicKey is a 32-byte UInt8Array & the secretKey is the entire 64-byte UInt8Array
  * The first 32 bytes of the array are the secret key and the last 32 bytes of the array are the public key
@@ -160,12 +163,6 @@ export class OrcaSwapClient {
    * @returns TxIds, inAmount, outAmount
    */
   async buy(size: number): Promise<SwapResult> {
-    console.log(`Current keypair has
-      ${
-        (await this.connection.getBalance(this.keypair.publicKey)) /
-        LAMPORTS_PER_SOL
-      } SOL`);
-
     const orca = getOrca(this.connection, Network.DEVNET);
     const orcaSOLPool = orca.getPool(OrcaPoolConfig.ORCA_SOL);
     const orcaUSDCPool = orca.getPool(OrcaPoolConfig.ORCA_USDC);
@@ -175,7 +172,7 @@ export class OrcaSwapClient {
     // Setting slippage lower is not recommended as it can cause swaps to fail
     const slippage = new Decimal(5.0);
 
-    // Swap from SOL -> ORCA
+    // Swap from USDC -> ORCA
     const quote1 = await orcaUSDCPool.getQuote(usdcToken, usdcAmount, slippage);
     const usdcQuoteAmount = quote1.getMinOutputAmount();
     console.log(
@@ -187,8 +184,12 @@ export class OrcaSwapClient {
       usdcAmount,
       usdcQuoteAmount,
     );
+
     const swap1TxId = await swapPayload.execute();
-    console.log('Signature:', swap1TxId, '\n');
+
+    if (logging) {
+      console.log('Signature:', transactionSolscan('devnet', swap1TxId), '\n');
+    }
 
     // Swap from ORCA -> SOL
     const quote2 = await orcaSOLPool.getQuote(
@@ -207,11 +208,14 @@ export class OrcaSwapClient {
       solQuoteAmount,
     );
     const swap2TxId = await swap2Payload.execute();
-    console.log('Signature:', swap2TxId, '\n');
+
+    if (logging) {
+      console.log('Signature:', transactionSolscan('devnet', swap2TxId), '\n');
+    }
 
     return {
       txIds: [swap1TxId, swap2TxId],
-      inAmount: usdcQuoteAmount.toNumber() * USDC_DECIMAL,
+      inAmount: usdcAmount.toNumber() * USDC_DECIMAL,
       outAmount: solQuoteAmount.toNumber() * SOL_DECIMAL,
     } as SwapResult;
   }
@@ -221,12 +225,6 @@ export class OrcaSwapClient {
    * @returns TxIds, inAmount, outAmount
    */
   async sell(size: number): Promise<SwapResult> {
-    console.log(`Current keypair has
-      ${
-        (await this.connection.getBalance(this.keypair.publicKey)) /
-        LAMPORTS_PER_SOL
-      } SOL`);
-
     const orca = getOrca(this.connection, Network.DEVNET);
     const orcaSOLPool = orca.getPool(OrcaPoolConfig.ORCA_SOL);
     const solToken = orcaSOLPool.getTokenB();
@@ -250,7 +248,10 @@ export class OrcaSwapClient {
       orcaQuoteAmount,
     );
     const swap1TxId = await swapPayload.execute();
-    console.log('Signature:', swap1TxId, '\n');
+
+    if (logging) {
+      console.log('Signature:', transactionSolscan('devnet', swap1TxId), '\n');
+    }
 
     // Swap ORCA -> USDC
     const quote2 = await orcaUSDCPool.getQuote(
@@ -269,7 +270,10 @@ export class OrcaSwapClient {
       usdcQuoteAmount,
     );
     const swap2TxId = await swap2Payload.execute();
-    console.log('Signature:', swap2TxId, '\n');
+
+    if (logging) {
+      console.log('Signature:', transactionSolscan('devnet', swap2TxId), '\n');
+    }
 
     return {
       txIds: [swap1TxId, swap2TxId],
@@ -283,18 +287,10 @@ export class OrcaSwapClient {
    * @returns TxIds, inAmount, outAmount
    */
   async sell_to_orca(size: number): Promise<SwapResult> {
-    console.log(`Current keypair has
-        ${
-          (await this.connection.getBalance(this.keypair.publicKey)) /
-          LAMPORTS_PER_SOL
-        } SOL`);
-
     const orca = getOrca(this.connection, Network.DEVNET);
     const orcaSOLPool = orca.getPool(OrcaPoolConfig.ORCA_SOL);
     const solToken = orcaSOLPool.getTokenB();
     const solAmount = new Decimal(size);
-    const orcaUSDCPool = orca.getPool(OrcaPoolConfig.ORCA_USDC);
-    const orcaToken = orcaSOLPool.getTokenA();
     // Setting slippage lower is not recommended as it can cause swaps to fail
     const slippage = new Decimal(5.0);
 
@@ -310,12 +306,51 @@ export class OrcaSwapClient {
       orcaQuoteAmount,
     );
     const swapTxId = await swapPayload.execute();
-    console.log('Signature:', swapTxId, '\n');
+
+    if (logging) {
+      console.log('Signature:', transactionSolscan('devnet', swapTxId), '\n');
+    }
 
     return {
       txIds: [swapTxId],
       inAmount: solAmount.toNumber() * SOL_DECIMAL,
       outAmount: orcaQuoteAmount.toNumber() * ORCA_DECIMAL,
+    } as SwapResult;
+  }
+
+  /**
+   * @param size The amount of token to swap;
+   * @returns TxIds, inAmount, outAmount
+   */
+  async buy_from_orca(size: number): Promise<SwapResult> {
+    const orca = getOrca(this.connection, Network.DEVNET);
+    const orcaSOLPool = orca.getPool(OrcaPoolConfig.ORCA_SOL);
+    const orcaAmount = new Decimal(size);
+    const orcaToken = orcaSOLPool.getTokenA();
+    // Setting slippage lower is not recommended as it can cause swaps to fail
+    const slippage = new Decimal(5.0);
+
+    const quote1 = await orcaSOLPool.getQuote(orcaToken, orcaAmount, slippage);
+    const solQuoteAmount = quote1.getMinOutputAmount();
+    console.log(
+      `Swap ${orcaAmount.toString()} ORCA for at least ${solQuoteAmount.toNumber()} SOL`,
+    );
+    const swapPayload = await orcaSOLPool.swap(
+      this.keypair,
+      orcaToken,
+      orcaAmount,
+      solQuoteAmount,
+    );
+    const swapTxId = await swapPayload.execute();
+
+    if (logging) {
+      console.log('Signature:', transactionSolscan('devnet', swapTxId), '\n');
+    }
+
+    return {
+      txIds: [swapTxId],
+      inAmount: orcaAmount.toNumber() * ORCA_DECIMAL,
+      outAmount: solQuoteAmount.toNumber() * SOL_DECIMAL,
     } as SwapResult;
   }
 }
