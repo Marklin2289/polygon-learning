@@ -34,6 +34,7 @@ import {
   useExtendedWallet,
   Order,
 } from '@figment-pyth/lib/wallet';
+import {SwapResult} from '@figment-pyth/lib/swap';
 import _ from 'lodash';
 import * as Rx from 'rxjs';
 import {DevnetPriceRatio} from './DevnetPriceRatio';
@@ -190,12 +191,15 @@ const Liquidate = () => {
           }
         }),
         Rx.debounceTime(20000), // Throttle the orders to be sent every 20 seconds.
+        Rx.map((v: any) => {
+          return addOrder({
+            ...v,
+            cluster,
+          });
+        }),
       )
       .subscribe((v: any) => {
-        addOrder({
-          ...v,
-          cluster,
-        });
+        console.log('subscribed ', v);
       });
     return () => {
       signalListener.removeAllListeners();
@@ -490,14 +494,27 @@ const Liquidate = () => {
           />
           <Table
             key="book"
-            rowKey="body"
+            rowKey={(order: Order & SwapResult) =>
+              `order-${order.timestamp}-${order?.txIds.join('-')}`
+            }
             dataSource={orderBook}
             columns={[
               {
                 title: 'Transactions',
                 dataIndex: 'txIds',
                 key: 'txIds',
-                render: (txIds) => {
+                render: (txIds, record) => {
+                  if (txIds.length === 0) {
+                    const errorMsg = record?.error.logs
+                      .find((l: string) => l.startsWith('Program log: Error'))
+                      .replace('Program log: Error: ', ''); // make the error short.
+                    return (
+                      <>
+                        <Tag color={'red'}>Failed</Tag>
+                        <span>{errorMsg}</span>
+                      </>
+                    );
+                  }
                   return (
                     <>
                       {txIds.map((txId: string) => (

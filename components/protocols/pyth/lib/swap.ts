@@ -66,6 +66,8 @@ export interface SwapResult {
   inAmount: number;
   outAmount: number;
   txIds: string[];
+  error?: any;
+  timestamp: number; // Unix timestamp
 }
 
 export class OrcaSwapClient {

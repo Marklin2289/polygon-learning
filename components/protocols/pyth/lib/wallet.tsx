@@ -174,6 +174,7 @@ export const useExtendedWallet = (
   };
 
   const addMockOrder = async (order: Order): Promise<SwapResult> => {
+    const timestamp = +new Date();
     const _jupiterSwapClient = await getJupiterSwapClient();
     const routes = await _jupiterSwapClient?.getRoutes({
       inputToken:
@@ -191,6 +192,7 @@ export const useExtendedWallet = (
     const bestRoute = routes?.routesInfos[0];
     console.log('bestRoute:', bestRoute);
     const result = {
+      timestamp,
       inAmount: bestRoute?.inAmount || 0,
       outAmount: bestRoute?.outAmount || 0,
       txIds: [
@@ -223,62 +225,123 @@ export const useExtendedWallet = (
       usdc_sol: 1,
     });
 
+  const addDevnetOrder = async (order: Order) => {
+    const timestamp = +new Date();
+    try {
+      const _orcaClient = await getOrcaSwapClient();
+      if (order.side === 'buy') {
+        switch (order.fromToken) {
+          case 'ORCA': {
+            const result = await _orcaClient?.buy_from_orca(order.size)!;
+            return {
+              ...result,
+              timestamp,
+            };
+          }
+          case 'USDC':
+          default: {
+            const result = await _orcaClient?.buy(order.size)!;
+            const inAmountHumanReadable = result.inAmount / USDC_DECIMAL;
+            const outAmountHumanReadable = result.outAmount / SOL_DECIMAL;
+            setDevnetToMainnetPriceRatioRef((prev) => ({
+              ...prev,
+              usdc_sol: inAmountHumanReadable / outAmountHumanReadable,
+            }));
+            return {
+              ...result,
+              timestamp,
+            };
+          }
+        }
+      } else {
+        switch (order.toToken) {
+          case 'ORCA': {
+            const result = await _orcaClient?.sell_to_orca(order.size)!;
+            return {
+              ...result,
+              timestamp,
+            };
+          }
+          case 'USDC':
+          default: {
+            const result = await _orcaClient?.sell(order.size)!;
+            const inAmountHumanReadable = result.inAmount / SOL_DECIMAL;
+            const outAmountHumanReadable = result.outAmount / USDC_DECIMAL;
+            setDevnetToMainnetPriceRatioRef((prev) => ({
+              ...prev,
+              sol_usdc: inAmountHumanReadable / outAmountHumanReadable,
+            }));
+            return {
+              ...result,
+              timestamp,
+            };
+          }
+        }
+      }
+    } catch (error) {
+      return Promise.resolve({
+        error,
+        inAmount: 0,
+        outAmount: 0,
+        txIds: [],
+        timestamp,
+      });
+    }
+  };
+
+  const addMainnetOrder = async (order: Order) => {
+    const timestamp = +new Date();
+    try {
+      const _jupiterSwapClient = await getJupiterSwapClient();
+      switch (order.side) {
+        case 'buy': {
+          const result = await _jupiterSwapClient?.buy(order.size);
+          return {
+            ...result,
+            timestamp,
+          };
+        }
+        case 'sell': {
+          const result = await _jupiterSwapClient?.sell(order.size);
+          return {
+            ...result,
+            timestamp,
+          };
+        }
+        default:
+          throw Error('Unidentified Order Type');
+      }
+    } catch (error) {
+      return Promise.resolve({
+        error,
+        inAmount: 0,
+        outAmount: 0,
+        txIds: [],
+        timestamp,
+      });
+    }
+  };
+
   const addOrder = useCallback(
     async (order: Order) => {
       console.log('addOrder', useLive, order, cluster);
       let result: SwapResult;
-      if (!useLive) {
-        result = await addMockOrder(order);
-      } else if (useLive) {
-        if (cluster === 'devnet') {
-          const _orcaClient = await getOrcaSwapClient();
-          if (order.side === 'buy') {
-            if (order.fromToken === 'ORCA') {
-              result = await _orcaClient?.buy_from_orca(order.size)!;
-              console.log('result:', result);
-            } else {
-              result = await _orcaClient?.buy(order.size)!;
-              const inAmountHumanReadable = result.inAmount / USDC_DECIMAL;
-              const outAmountHumanReadable = result.outAmount / SOL_DECIMAL;
-              setDevnetToMainnetPriceRatioRef((prev) => ({
-                ...prev,
-                usdc_sol: inAmountHumanReadable / outAmountHumanReadable,
-              }));
-              console.log('result:', result);
-            }
-          } else if (order.side === 'sell') {
-            if (order.toToken === 'ORCA') {
-              // console.log(_orcaClient);
-              result = await _orcaClient?.sell_to_orca(order.size)!;
-              console.log('result:', result);
-            } else if (order.toToken === 'USDC') {
-              result = await _orcaClient?.sell(order.size)!;
-              const inAmountHumanReadable = result.inAmount / SOL_DECIMAL;
-              const outAmountHumanReadable = result.outAmount / USDC_DECIMAL;
-              setDevnetToMainnetPriceRatioRef((prev) => ({
-                ...prev,
-                sol_usdc: inAmountHumanReadable / outAmountHumanReadable,
-              }));
-              console.log('result:', result);
-            }
-          } else {
-            console.log('Impossible!');
-          }
-        } else if (cluster === 'mainnet-beta') {
-          console.log(jupiterSwapClient?.keypair.publicKey.toString());
-          const _jupiterSwapClient = await getJupiterSwapClient();
-          console.log(_jupiterSwapClient?.keypair.publicKey.toString());
-          if (order.side === 'buy') {
-            result = await _jupiterSwapClient?.buy(order.size);
-          } else if (order.side === 'sell') {
-            result = await _jupiterSwapClient?.sell(order.size);
-          }
+      switch (true) {
+        case useLive && cluster === 'mainnet-beta': {
+          result = await addMainnetOrder(order);
+          break;
+        }
+        case useLive && cluster === 'devnet': {
+          result = await addDevnetOrder(order);
+          break;
+        }
+        case !useLive:
+        default: {
+          result = await addMockOrder(order);
         }
       }
-      if (result!) {
-        const extendedOrder = {...order, ...result};
-        setOrderbook((_orderBook) => [extendedOrder, ..._orderBook]);
-      }
+      const extendedOrder: Order & SwapResult = {...order, ...result};
+      setOrderbook((_orderBook) => [extendedOrder, ..._orderBook]);
 
       mutate(); // Refresh balance.
     },
