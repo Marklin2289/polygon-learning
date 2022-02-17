@@ -35,9 +35,6 @@ const Wallet = () => {
   const {setSecretKey, secretKey, keyPair, balance, resetWallet, worth} =
     useExtendedWallet(useLive, cluster, price);
 
-  const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
-  const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
-
   // Shorten the public key for display purposes
   const displayAddress = `${keyPair.publicKey
     .toString()
@@ -148,31 +145,30 @@ const Wallet = () => {
                     title={'USDC'}
                   />
                 </Col>
-
                 {useLive ? (
-                  <Col span={12}>
-                    <Statistic
-                      value={balance?.orca_balance / ORCA_DECIMAL}
-                      title={'ORCA'}
-                    />
-                  </Col>
+                  <>
+                    <Col span={12}>
+                      <Statistic
+                        value={balance?.orca_balance / ORCA_DECIMAL}
+                        title={'ORCA'}
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Statistic
+                        value={worth.current.toFixed(4)}
+                        prefix={'$'}
+                        title={'TOTAL WORTH'}
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Statistic
+                        value={worth.change.toFixed(4)}
+                        prefix={'%'}
+                        title={'Change'}
+                      />
+                    </Col>
+                  </>
                 ) : null}
-
-                <Col span={12}>
-                  <Statistic
-                    value={worth.current.toFixed(4)}
-                    prefix={'$'}
-                    title={'TOTAL WORTH'}
-                  />
-                </Col>
-
-                <Col span={12}>
-                  <Statistic
-                    value={worth.change.toFixed(4)}
-                    prefix={'%'}
-                    title={'Change'}
-                  />
-                </Col>
               </Row>
               <Row>
                 {useLive ? (

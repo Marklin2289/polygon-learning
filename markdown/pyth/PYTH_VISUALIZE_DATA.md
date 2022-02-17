@@ -8,7 +8,7 @@ Slightly separate topics, though worth considering if you wish to build upon the
 
 # 👀 Charting Pyth data
 
-The **page** being rendered on the right is defined in `components/protocols/pyth/components/ChartMock.tsx`, which contains both the price feed component from the Connect step and the Chart component defined in `components/protocols/pyth/components/Chart.tsx`. Turning on the price feed will populate the chart, by passing the data to the Chart component. You can probably tell where we're going with this 😉
+The **chart** being rendered on the right is defined in `components/protocols/pyth/components/ChartMock.tsx`, which contains some of the price feed component from the Connect step and the Chart component defined in `components/protocols/pyth/components/Chart.tsx`. Toggling on the price feed will populate the chart, by passing the data to the Chart component. You can probably tell where we're going with this 😉
 
 ```jsx
 // components/protocols/pyth/components/ChartMock.tsx
@@ -63,7 +63,6 @@ const ema = (newData.price - previousEma) * smoothingFactor + previousEma;
 We can add a `setData` hook to the `getPythData` function that we created in our initial Connect component, so that the `data` is being calculated on the spot, then passed into the Chart component. `newData` is defining the data structure in place, and populating the object with the price, confidence and a timestamp. We're using this `data` in the Chart component. You'll notice that we leave the SMA, EMA and trend as `undefined`. They're being calculated and set inside `setData` 😀
 
 ```typescript
-// solution
 // components/protocols/pyth/components/ChartMock.tsx
 
   const getPythData = async (checked: boolean) => {
@@ -105,17 +104,7 @@ We can add a `setData` hook to the `getPythData` function that we created in our
          */
         setData((data) => {
           if (data.length > window) {
-            const windowSlice = data.slice(data.length - window, data.length);
-            const sum = windowSlice.reduce(
-              (prev, curr) => prev + curr.price,
-              0,
-            );
-            newData.sma = sum / window;
-
-            const previousEma = newData.ema || newData.sma;
-            const currentEma =
-              (newData.price - previousEma) * smoothingFactor + previousEma;
-            newData.ema = currentEma;
+          // ...
 ```
 
 This next piece of code is how we are defining our buy and sell signals based on the trend of the EMA. Pivoting on the value being entered for the `yieldExpectation`, we can make a simple calculation to emit a **buy** signal if the trend is greater than our expected yield, otherwise emit a **sell** signal. The `signalListener` is an instance of an `EventEmitter` (read more about [the `events` module](https://nodejs.org/api/events.html#events) and [EventEmitters](https://nodejs.org/api/events.html#class-eventemitter) if you need to brush up) - this essentially lets us run any functions listening to the event when it is triggered. We can just emit the event here in our code and know that the relevant functions to add the orders to the order book will be called. We'll touch on this again soon, when we're performing our token swaps.
@@ -154,7 +143,7 @@ The returned `data` is what we are passing to the Chart component.
 
 There is a concise [getting started guide](https://recharts.org/en-US/guide/getting-started) on the recharts website which should bring you up to speed for reading the contents of `components/protocols/pyth/components/Chart.tsx`. There isn't anything complicated going on with this component, but let's quickly break down the code for better understanding.
 
-The beginning of the file is where we import any other code we need, including the antd Select dropdown menu and the recharts components. This component has a single `useEffect`, which contains `data` in the dependency array - so any time the `data` changes, this component will re-render. All we're doing is making sure that the data exists by checking that the length is greater than zero, and then setting the domain for our chart data. The entire `data` object, as defined in `ChartMock.tsx` will be passed to the rechart `AreaChart` component. The rest of this component is effectively passing properties to the components and defining the style of the chart. No need to focus on this part unless you're very particular about how the information is displayed. You might want to change the colors, or even try a completely different style of chart. The recharts library is fast and quite flexible.
+We'll import any other code we need at the beginning of the file, including the recharts components. This `Chart` component has a single `useEffect`, which contains `data` in the dependency array - so any time the `data` changes, this component will re-render. All we're doing is making sure that the data exists by checking that the length is greater than zero, and then setting the domain for our chart data. The entire `data` object, as defined in `ChartMock.tsx` will be passed to the rechart `AreaChart` component. The rest of this component is effectively passing properties to the components and defining the style of the chart. No need to focus on this part unless you're very particular about how the information is displayed. You might want to change the colors, or even try a completely different style of chart. The recharts library is fast and quite flexible.
 
 ```tsx
 // components/protocols/pyth/components/Chart.tsx

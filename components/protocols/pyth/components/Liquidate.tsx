@@ -44,12 +44,12 @@ const pythPublicKey = getPythProgramKeyForCluster(PYTH_NETWORKS.DEVNET);
 const pythConnection = new PythConnection(connection, pythPublicKey);
 const signalListener = new EventEmitter();
 
-const Liquidate = () => {
-  type orderSizeMultipleCluster = {
-    mainnet: number;
-    devnet: number;
-  };
+type orderSizeMultipleCluster = {
+  mainnet: number;
+  devnet: number;
+};
 
+const Liquidate = () => {
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
   const {state, dispatch} = useGlobalState();
   const [cluster, setCluster] = useState<Cluster>('devnet');

@@ -1,136 +1,80 @@
 Before we start working on making swaps with actual tokens on the Solana devnet, we're going to create a mock implementation as a starting point. For this implementation, we will also link the buy & sell orders to a manual button press for testing.
 
-Then we're going to work with some additional code libraries to perform token swaps on a Solana based DEX. This is where we will be able to swap our SOL for some USDC using the Orca pools on devnet so that we can begin using the liquidation bot. We'll go over the `OrcaSwapClient` which will be used to swap SOL for SPL tokens.
+Then we're going to work with some additional code libraries to perform token swaps on a Solana based DEX. This is where we will be able to swap our SOL for some USDC using the Orca pools on devnet so that we can begin using the liquidation bot (without risking any real funds). We'll go over the `OrcaSwapClient` which will be used to swap SOL for SPL tokens.
 
 On mainnet, we have access to the more powerful Jupiter SDK where we can swap directly without needing to keep track of intermediate pairs. Again, the mainnet enabled code is primarily for illustration and should not be used without proper testing and understanding the inherent risks.
 
 ---
 
-# 🧱 Building the Mock exchange component
+# 🧱 Adding orders to the order book
 
-You can find the `addMockOrder` function in `components/protocols/pyth/lib/wallet.tsx`:
+We went over the `addMockOrder` and `addDevnetOrder` functions in `components/protocols/pyth/lib/wallet.tsx` in a previous step. With a mock transaction, we use the Jupiter SDK to ensure the prices we're getting are indicative of mainnet. We are also passing in an `Order` object and getting back a `SwapResult`, but no swap is actually performed. The returned `txIds` array contains the identifier "**mockTransaction\_**" and a 6-digit random number. As part of the `addMockOrder` function, we also update the mock wallet balances.
 
-```typescript
-const addMockOrder = async (order: Order): Promise<SwapResult> => {
-  const _jupiterSwapClient = await getJupiterSwapClient();
-
-  // TokenA === SOL
-  // TokenB === USDC
-  const routes = await _jupiterSwapClient?.getRoutes({
-    inputToken:
-      order.side === 'buy'
-        ? _jupiterSwapClient.tokenB
-        : _jupiterSwapClient.tokenA,
-    outputToken:
-      order.side === 'buy'
-        ? _jupiterSwapClient.tokenA
-        : _jupiterSwapClient.tokenB,
-    inputAmount: order.size,
-    slippage: 1,
-  });
-  console.log('routes:', routes);
-  const bestRoute = routes?.routesInfos[0];
-  console.log('bestRoute:', bestRoute);
-  const result = {
-    inAmount: bestRoute?.inAmount || 0,
-    outAmount: bestRoute?.outAmount || 0,
-    txIds: [
-      `mockTransaction_${Math.abs(Math.random()).toString().slice(2, 8)}`,
-    ],
-  };
-
-  // Balance change for the mock wallet. This is not an actual transaction.
-  setBalance((previousBalance) => ({
-    ...previousBalance,
-    usdc_balance:
-      order.side === 'buy'
-        ? previousBalance.usdc_balance - result.inAmount
-        : previousBalance.usdc_balance + result.outAmount,
-    sol_balance:
-      order.side === 'buy'
-        ? previousBalance.sol_balance + result.outAmount
-        : previousBalance.sol_balance - result.inAmount,
-  }));
-
-  return result;
-};
-```
-
-With a mock transaction, we'll use the Jupiter SDK to ensure the prices we're getting are indicative of mainnet. You'll notice that we are also passing in an `Order` object and getting back a `SwapResult`, but no swap is actually performed. The returned `txIds` array contains the identifier "mockTransaction\_" and a 6-digit random number. As part of this `addMockOrder` function, we also update the mock wallet balances.
-
----
-
-# 🧱 Adding an order to the order book
+`addOrder` will use the appropriate function to put the order into the order book.
 
 ```typescript
+// components/protocols/pyth/lib/wallet.tsx
+
+// ...
 const addOrder = useCallback(
   async (order: Order) => {
     console.log('addOrder', useLive, order, cluster);
     let result: SwapResult;
-    if (!useLive) {
-      result = await addMockOrder(order);
-    } else if (useLive) {
-      if (cluster === 'devnet') {
-        const _orcaClient = await getOrcaSwapClient();
-        if (order.side === 'buy') {
-          result = await _orcaClient?.buy(order.size)!;
-          console.log('result:', result);
-        } else if (order.side === 'sell') {
-          if (order.toToken === 'ORCA') {
-            console.log(_orcaClient);
-            result = await _orcaClient?.sell_to_orca(order.size)!;
-            console.log('result:', result);
-          } else if (order.toToken === 'USDC') {
-            console.log(_orcaClient);
-            result = await _orcaClient?.sell(order.size)!;
-            console.log('result:', result);
-          }
-        } else {
-          console.log('Impossible!');
-        }
-      } else if (cluster === 'mainnet-beta') {
-        console.log(jupiterSwapClient?.keypair.publicKey.toString());
-        const _jupiterSwapClient = await getJupiterSwapClient();
-        console.log(_jupiterSwapClient?.keypair.publicKey.toString());
-        if (order.side === 'buy') {
-          result = await _jupiterSwapClient?.buy(order.size);
-        } else if (order.side === 'sell') {
-          result = await _jupiterSwapClient?.sell(order.size);
-        }
+    switch (true) {
+      case useLive && cluster === 'mainnet-beta': {
+        result = await addMainnetOrder(order);
+        break;
+      }
+      case useLive && cluster === 'devnet': {
+        result = await addDevnetOrder(order);
+        break;
+      }
+      case !useLive:
+      default: {
+        result = await addMockOrder(order);
       }
     }
-    if (result!) {
-      const extendedOrder = {...order, ...result};
-      setOrderbook((_orderBook) => [extendedOrder, ..._orderBook]);
-    }
+    const extendedOrder: Order & SwapResult = {...order, ...result};
+    setOrderbook((_orderBook) => [extendedOrder, ..._orderBook]);
 
-    mutate(); // Refresh balance
+    mutate(); // Refresh balance.
   },
-  [useLive, cluster, keyPair],
+  [useLive, cluster, keyPair, devnetToMainnetPriceRatioRef],
 );
+// ...
 ```
+
+# 🪂 Getting an airdrop on Solana devnet
+
+{% hint style="tip" %}
+If you already know how to fund your wallet with an airdrop, go ahead and get some SOL (more is better, but make sure to have at least 2 SOL for testing the liquidation bot).
+{% endhint %}
+
+At this point you will need to acquire some SOL to perform swaps on devnet. The simplest way to do this is by visiting [solfaucet.com](https://solfaucet.com/). Copy the public key of your keypair, and paste it into the textarea on the faucet site. Click on the "Devnet" button and in a few seconds, you will have some SOL to play with on devnet. You can airdrop **a maximum of 2 SOL per request** using this method. Larger amounts will simply not work, if you view the transaction on the block explorer, you will see a Memo written to the blockchain that says (for example) `request too large; req: ◎10, cap: ◎2`.
+
+![SolFaucet Example](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/sol_faucet.png?raw=true)
+
+---
 
 # 🎠 Playground time
 
-Take a few minutes and get comfortable with the mock swap process. Just switch the wallet over to "Mock", then click "Reset Wallet" to return the balances to their default amounts of 10 SOL and 1,400 USDC. You can then click on the **buy** or **sell** buttons located just above the Order book to perform a single trade, based on the best available route reported by Jupiter. Notice that the Transaction link is displayed as "mockT", and does not link to a valid transaction on solscan.io.
+Take a few minutes and get comfortable with the mock swap process. Just switch the wallet over to "Mock", then click "Reset Wallet" to return the balances to their default amounts of 10 SOL and 1,400 USDC. You can then click on the **SOL -> ORCA** button located just above the Order book to perform a single trade, based on the best available route reported by Jupiter. Notice that the Transaction link is displayed as "mockT", and does not link to a valid transaction on solscan.io.
 
-If you switch to the Live wallet, you will need to have some SOL in order to make swaps. The token values on the devnet Orca pools are a little out of line with the mainnet values, and you'll quickly notice that some swaps will fail due to an insufficient balance. The way we've tuned the liquidation bot is actually based on the true mainnet token values, so don't be alarmed if there are some failed swaps. It's a great way to learn about how the swaps work behind the scenes if you care to dig into it, but we'll leave out those details so that you don't get overwhelmed.
+Switch to the Live wallet, then swap some tokens around on devnet! If you don't have some ORCA in your devnet wallet before starting up the bot in the next step, it won't like the fact that you're trying to swap the entire amount of ORCA in your initial swap. Also keep in mind that the token values on the devnet Orca pools are a little out of line with the mainnet values, and you'll notice that some swaps can fail due to an insufficient USDC balance. To prevent this from being an issue, we're catching the errors and displaying failed swaps on the order book.
+
+The way we've tuned the liquidation bot is actually based on the mainnet token values, so don't be alarmed if there are some failed swaps. It's a great way to learn about how the swaps work behind the scenes if you care to dig into it, but we'll leave out those details so that you don't get overwhelmed.
+
+---
 
 # 🧱 Building the Exchange component
 
 Two files to be aware of here: The Exchange component `components/protocols/pyth/components/Exchange.tsx` which is being rendered on the right side of the screen and the helper code for performing swaps on devnet or mainnet, located in `components/protocols/pyth/lib/swap.ts`.
 
-You'll notice that we have already included the price feed and wallet components for this step. There are also a few new components to consider:
-
-- A textinput for the Yield Expectation
-- Buttons to place buy and sell orders into the order book, kept in their own component
-- A table component to maintain the order book
-
-We've removed the chart component for now, but it will come back in the next step when we bring everything together!
+You'll notice that we have only included the wallet and the order book for this step. We've removed the chart component for now, but it will come back in the next step when we bring everything together!
 
 # 🚚 Importing dependencies
 
-We went over imports earlier in the pathway, the only new ones here are the Orca and Jupiter SDKs.
+We went over imports earlier in the pathway, the only new ones to be aware of here are the Orca and Jupiter SDKs.
 
 - [`@orca-so/sdk`](https://github.com/orca-so/typescript-sdk#orca-typescript-sdk) the Orca SDK enables us to create our `OrcaSwapClient`
 - [`@jup-ag/core`](https://docs.jup.ag/jupiter-core/using-jupiter-core#usage) the Jupiter SDK enables us to create our `JupiterSwapClient`
@@ -143,13 +87,17 @@ import {getOrca, OrcaPoolConfig, Network} from '@orca-so/sdk';
 import {Jupiter, RouteInfo, TOKEN_LIST_URL} from '@jup-ag/core';
 ```
 
+---
+
 # 🏦 Associated Token Accounts
 
-Working with SPL tokens on Solana can be tricky, but we'll go over the fundamentals quickly so you're up to speed. You can get more details from the [Solana docs on the topic](https://spl.solana.com/associated-token-account) if you're interested.
+Working with SPL tokens on Solana can be a little intimidating at first, but we'll quickly go over the fundamentals so you're up to speed. You can get more details from the [Solana docs on the topic](https://spl.solana.com/associated-token-account) if you're interested. This process is handled transparently by the Orca and Jupiter SDKs when swapping tokens.
 
 An Associated Token Account ("ATA") is an account owned by the SPL Token Program, associated with your public key. It is where SPL tokens of a specific mint address are stored and the balances can be viewed on most Solana block explorers. [solscan.io](https://solscan.io) has a tab on the account display page which will list your owned token balances.
 
-Without going into too much detail, an ATA is required for Solana users to hold tokens. All we're doing here is using a couple of `Token` class methods, `getAssociatedTokenAddress` and `createAssociatedTokenAccountInstruction`. You don't need to read the code block below unless you want to see how those functions are being used. The [Solana Cookbook](https://solanacookbook.com) is a useful resource for code snippets related to SPL tokens.
+Without going into too much detail, an ATA is required for Solana users to hold SPL tokens. The address of the Token Account can be derived from a public key and the mint address of the token. All we're doing here is illustrating the process using a couple of `Token` class methods: `getAssociatedTokenAddress` and `createAssociatedTokenAccountInstruction`. You don't need to read the code block below unless you want to see how those functions are being used. The [Solana Cookbook](https://solanacookbook.com) is a useful resource for code snippets related to SPL tokens.
+
+`transactionSolscan` is just a helper function we've provided to easily turn a transaction signature (or "hash") into a usable link to the solscan.io block explorer. You can find it in `components/protocols/pyth/lib/index.ts`.
 
 ```typescript
 // components/protocols/pyth/lib/swap.ts
@@ -179,13 +127,15 @@ Without going into too much detail, an ATA is required for Solana users to hold 
 // ...
 ```
 
+---
+
 # 🎁 Wrapping SOL
 
 Wrapped SOL ("wSOL") is an SPL token. Sometimes it is necessary to be able to swap between SOL and other SPL tokens. We'll need an ATA for wSOL to be able to send this transaction. In most cases, the creation of this ATA is handled behind the scenes but we're exposing it here for your learning. The "Sync Native" instruction being sent to the SPL Token Program is what keeps the wSOL balance synced with the SOL balance of the ATA. You can pass an amount and the public key of the ATA to send the SOL to as the parameters.
 
-As you can see, we are simply creating a transaction by adding instructions to the System Program and the SPL Token program.
+As you can see, we are simply creating a transaction by adding instructions to the System Program and the SPL Token program. The function returns a solscan.io URL for the transaction so that details are at your fingertips.
 
-The function returns a solscan.io URL for the transaction so that details are at your fingertips.
+Also, when sending the transaction you must pass an array containing the signing keypairs. The reason you're seeing `this.keypair` is because the `wrapSOL` method exists inside of the `OrcaSwapClient` class.
 
 ```typescript
 // components/protocols/pyth/lib/swap.ts
@@ -218,9 +168,11 @@ The function returns a solscan.io URL for the transaction so that details are at
   }
 ```
 
+---
+
 # 📈 Buy & Sell Orders
 
-We need to define what an Order looks like so that we can work with it in code. This is a data type which contains information about an order, including the tokens being swapped and the size of the order. This interface is defined in `components/protocols/pyth/lib/wallet.ts`
+We need to define what an Order looks like so that we can work with it in code. This is a data type which contains information about an order, including the tokens being swapped and the size of the order. This interface is defined in `components/protocols/pyth/lib/wallet.ts`.
 
 ```typescript
 // components/protocols/pyth/lib/wallet.ts
@@ -235,7 +187,7 @@ interface Order {
 }
 ```
 
-To tie it together, we need to define the interface for SPL Tokens as well as SwapResults.
+To tie it together, we need to define the interface for SPL Tokens as well as our own SwapResult. This `TokenI` interface is for mainnet swaps using Jupiter.
 
 ```typescript
 // components/protocols/pyth/lib/swap.ts
@@ -544,9 +496,7 @@ The `executeSwap` method is the last piece of functionality we need to make our 
 
 # 🧪 Testing individual buy and sell orders
 
-We've encapsulated the indvidual buy and sell buttons into their own component, which is included in `components/protocols/pyth/components/Exchange.tsx`. This functional component passes the `Order` object to the `addOrder` function, and has default placeholder values but will accept the updated values based on the inputs thanks to `onChange`.
-
-There is also a dedicated button to swap from SOL to ORCA. This is important because if you attempt swaps without having some extra ORCA tokens, you won't be able to pay the pool fees and there will be an "Insufficient balance" error.
+We've encapsulated the indvidual buy and sell buttons into their own component, which is included in `components/protocols/pyth/components/Exchange.tsx`. This functional component passes the `Order` object to the `addOrder` function in the `onClick` property of each button, and has default placeholder values but will accept the updated values based on the inputs thanks to `onChange`.
 
 {% hint style="tip" %}
 Remember to swap some SOL for ORCA before you start the liquidation bot!
@@ -558,45 +508,51 @@ Remember to swap some SOL for ORCA before you start the liquidation bot!
 const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
   addOrder,
 }) => {
-  const [buySize, setBuySize] = useState<number>(0.1);
+  const [buySize, setBuySize] = useState<number>(0.01);
   const [sellSize, setSellSize] = useState<number>(0.1);
-  const [sellInitialSize, setSellInitialSize] = useState<number>(0.1);
+  const [sellSOLToOrcaSize, setSellSOLToOrcaSize] = useState<number>(0.1);
+  const [sellOrcaToSOLSize, setSellOrcaToSOLSize] = useState<number>(0.1);
   return (
     <Card bordered={false}>
       <Row>
-        <Input.Group compact>
-          <br />
-          <InputNumber
-            min={0}
-            value={sellSize}
-            onChange={(val) => setSellSize(val)}
-          />
-          <Button
-            type="primary"
-            onClick={async () =>
-              await addOrder({
-                side: 'sell',
-                size: sellSize,
-                fromToken: 'SOL',
-                toToken: 'ORCA',
-              })
-            }
-          >
-            SOL -&gt; ORCA
-          </Button>
-        </Input.Group>
-        <Col span={8}>
+        <Col span={10}>
+          <Input.Group compact>
+            <InputNumber
+              step={0.1}
+              min={0}
+              value={sellSOLToOrcaSize}
+              onChange={(val) => setSellSOLToOrcaSize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={() =>
+                addOrder({
+                  side: 'sell',
+                  size: sellSOLToOrcaSize,
+                  fromToken: 'SOL',
+                  toToken: 'ORCA',
+                })
+              }
+            >
+              SOL -&gt; ORCA
+            </Button>
+          </Input.Group>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={10}>
           <br />
           <Input.Group compact>
             <InputNumber
+              step={0.1}
               min={0}
               value={sellSize}
               onChange={(val) => setSellSize(val)}
             />
             <Button
               type="primary"
-              onClick={async () =>
-                await addOrder({
+              onClick={() =>
+                addOrder({
                   side: 'sell',
                   size: sellSize,
                   fromToken: 'SOL',
@@ -604,24 +560,25 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
                 })
               }
             >
-              sell
+              SOL -&gt; USDC
             </Button>
           </Input.Group>
         </Col>
-        <br />
-        <br />
-        <Col span={8}>
+      </Row>
+      <Row>
+        <Col span={10}>
           <br />
           <Input.Group compact>
             <InputNumber
+              step={0.1}
               min={0}
               value={buySize}
               onChange={(val) => setBuySize(val)}
             />
             <Button
               type="primary"
-              onClick={async () =>
-                await addOrder({
+              onClick={() =>
+                addOrder({
                   side: 'buy',
                   size: buySize,
                   fromToken: 'USDC',
@@ -629,7 +586,33 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
                 })
               }
             >
-              buy
+              USDC -&gt; SOL
+            </Button>
+          </Input.Group>
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col span={10}>
+          <Input.Group compact>
+            <InputNumber
+              step={0.1}
+              min={0}
+              value={sellOrcaToSOLSize}
+              onChange={(val) => setSellOrcaToSOLSize(val)}
+            />
+            <Button
+              type="primary"
+              onClick={() =>
+                addOrder({
+                  side: 'buy',
+                  size: sellOrcaToSOLSize,
+                  fromToken: 'ORCA',
+                  toToken: 'SOL',
+                })
+              }
+            >
+              ORCA -&gt; SOL
             </Button>
           </Input.Group>
         </Col>
@@ -638,6 +621,8 @@ const BuySellControllers: React.FC<{addOrder: (order: Order) => void}> = ({
   );
 };
 ```
+
+---
 
 # 📖 The order book
 
@@ -649,14 +634,9 @@ Before doing this on devnet, give it a try using the mock wallet! You'll be able
 - "Side" indicates whether the order was a buy or sell
 - You can easily interpret the outgoing and incoming tokens and amounts
 
-<<<<<<< Updated upstream
-![Mock Order](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/mock_orderbook.png)
-=======
 ![The Order Book](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/order_book.png?raw=true)
 
 You might notice there's a discrepancy in the devnet token values. This is unfortunately beyond our control. The mock swaps and mainnet swaps use the true values from Jupiter.
-
-> > > > > > > Stashed changes
 
 Let's take a quick look at the Table in the return value of `components/protocols/pyth/components/Exchange.tsx` to better understand how the order book is being rendered. The antd Table component takes an _array of objects_ for the `columns`, each of these objects has a `title`, `dataIndex` and `key` - optionally we can use the `render` method to add whatever additional React fragments we need, for example: Mapping the transaction IDs to a link pointing to the correct page on solscan.io, or changing the color of the tags we use to display the amounts.
 
@@ -667,24 +647,42 @@ Remember to wrap the return values here in [React fragments](https://reactjs.org
 ```tsx
 // components/protocols/pyth/components/Exchange.tsx
 
+// ...
 <Table
+  key="book"
+  rowKey={(order: Order & SwapResult) =>
+    `order-${order.timestamp}-${order?.txIds.join('-')}`
+  }
   dataSource={orderBook}
   columns={[
     {
       title: 'Transactions',
       dataIndex: 'txIds',
       key: 'txIds',
-      render: (txIds) => {
+      render: (txIds, record) => {
+        if (txIds.length === 0) {
+          const errorMsg = record?.error.logs
+            .find((l: string) => l.startsWith('Program log: Error'))
+            .replace('Program log: Error: ', ''); // make the error short.
+          return (
+            <>
+              <Tag color={'red'}>Failed</Tag>
+              <span>{errorMsg}</span>
+            </>
+          );
+        }
         return (
           <>
             {txIds.map((txId: string) => (
               <a
+                // @ts-ignore
                 href={`https://solscan.io/tx/${txId}?cluster=${cluster}`}
                 key={txId}
                 target={'_blank'}
                 rel="noreferrer"
               >
-                {txId?.substring(-1, 5)}
+                {txId?.substring(-1, 8)}
+                <br />
               </a>
             ))}
           </>
@@ -732,6 +730,7 @@ Remember to wrap the return values here in [React fragments](https://reactjs.org
     },
   ]}
 ></Table>
+// ...
 ```
 
 ---
@@ -739,22 +738,47 @@ Remember to wrap the return values here in [React fragments](https://reactjs.org
 # 🏋️ Challenge
 
 {% hint style="tip" %}
-In `components/protocols/pyth/components/Exchange.tsx`, finish implementing the RxJS `map` to determine what happens when a buy or sell signal is resolved. You must replace the instances of `undefined` to accomplish this.
+In `components/protocols/pyth/components/Exchange.tsx`, finish implementing the RxJS `map` **return values** to determine what happens when a buy or sell signal is resolved. You must replace the instances of `undefined` to accomplish this.
 {% endhint %}
 
 **Take a few minutes to figure this out**
 
 ```typescript
-//...
+// components/protocols/pyth/components/Exchange.tsx
+
+        //...
         Rx.map((val: number) => {
           if (val > 0) {
-            // buy.
-            return {undefined};
+            // Buy.
+            const orderSizeSupposedTo =
+              val *
+              (cluster === 'devnet'
+                ? orderSizeUSDC.devnet
+                : orderSizeUSDC.mainnet);
+            const orderSize = Math.min(
+              orderSizeSupposedTo,
+              balance.usdc_balance,
+            );
+            return {
+              undefined;
+            };
           } else if (val <= 0) {
-            return {undefined};
+            // Sell.
+            const orderSizeSupposedTo =
+              Math.abs(val) *
+              (cluster === 'devnet'
+                ? orderSizeSOL.devnet
+                : orderSizeSOL.mainnet);
+            const orderSize = Math.min(
+              orderSizeSupposedTo,
+              balance.sol_balance,
+            );
+            return {
+              undefined;
+            };
           }
         }),
-//...
+        //...
 ```
 
 **Need some help?** Check out these hints 👇
@@ -771,31 +795,53 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 
 ```typescript
 // solution
-//...
+// components/protocols/pyth/components/Exchange.tsx
+
+        //...
         Rx.map((val: number) => {
           if (val > 0) {
+            // Buy.
+            const orderSizeSupposedTo =
+              val *
+              (cluster === 'devnet'
+                ? orderSizeUSDC.devnet
+                : orderSizeUSDC.mainnet);
+            const orderSize = Math.min(
+              orderSizeSupposedTo,
+              balance.usdc_balance,
+            );
             return {
               side: 'buy',
-              size: val * orderSizeUSDC,
+              size: orderSize,
               fromToken: 'usdc',
               toToken: 'sol',
             };
           } else if (val <= 0) {
+            // Sell.
+            const orderSizeSupposedTo =
+              Math.abs(val) *
+              (cluster === 'devnet'
+                ? orderSizeSOL.devnet
+                : orderSizeSOL.mainnet);
+            const orderSize = Math.min(
+              orderSizeSupposedTo,
+              balance.sol_balance,
+            );
             return {
               side: 'sell',
-              size: Math.abs(val) * orderSizeSOL,
+              size: orderSize,
               fromToken: 'sol',
               toToken: 'usdc',
             };
           }
         }),
-//...
+        //...
 ```
 
 **What happened in the code above?**
 
 - We use RxJS to `map` the numerical value being passed, then return an `Order` object with the appropriate values set in its properties.
-- The property names need to match the `Order` object, `side`, `size`, `fromToken` & `toToken`.
+- The property names contained in the returned object need to match the `Order` object: `side`, `size`, `fromToken` & `toToken`.
 
 ---
 
@@ -803,14 +849,14 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 
 ## 🐢 Mock swaps
 
-If you're going to use the **mock wallet**, then all you need to do is specify an amount to buy or sell into the input next to the button and click on the **buy** or **sell** button. This will generate a mock transaction, which is _not_ sent to the Solana cluster. You can still view the order details on the order book component, however the Transaction link to the block explorer will not work.
+If you're going to use the **mock wallet**, then all you need to do is specify an amount to buy or sell in the input next to the button and click on the button next to the input to perform the swap. This will generate a mock transaction, which is _not_ sent to the Solana cluster. You can still view the order details on the order book component, however the Transaction link to the block explorer will not work.
 
 ## 🐇 Actual swaps
 
-Once you've made the necessary changes to `components/protocols/pyth/components/Exchange.tsx` and saved the file, the Next.js development server will hot module reload the page automatically. Once the page is reloaded, you can switch the wallet over to **live**. Clicking on the "sell" and "buy" buttons will send an order of each type on devnet. If you're feeling brave (and if you have actual SOL in your wallet) you might try a swap on mainnet.
+Once you've made the necessary changes to `components/protocols/pyth/components/Exchange.tsx` and saved the file, the Next.js development server will hot module reload the page automatically. Once the page is reloaded, you can switch the wallet over to **live**. Clicking on the swap buttons will send an order of each type on devnet. If you're feeling brave (and if you have actual SOL in your wallet) you might try a swap on mainnet to see how smooth Jupiter can be.
 
 ---
 
 # 🏁 Conclusion
 
-We learned about Associated Token Accounts and SPL tokens like Wrapped SOL. We also looked at how to use the Orca and Jupiter SDKs by creating functions for exchanging SPL tokens. Using RxJS, we can save a lot of hassle in how we perform the swaps, using a defined "order book" to hold and process the swaps.
+We learned about Associated Token Accounts and SPL tokens like Wrapped SOL. We also looked at how to use the Orca and Jupiter SDKs by creating functions for exchanging SPL tokens. Using RxJS we can save a lot of hassle in how we perform the swaps, using an order book to keep track of and process the swaps.

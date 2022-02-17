@@ -1,4 +1,4 @@
-import {accountSolscan, transactionSolscan} from './index';
+import {transactionSolscan} from './index';
 import {
   Cluster,
   Connection,
@@ -7,7 +7,6 @@ import {
   Transaction,
   SystemProgram,
   TransactionInstruction,
-  LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import {Jupiter, RouteInfo, TOKEN_LIST_URL} from '@jup-ag/core';
 import {getOrca, OrcaPoolConfig, Network} from '@orca-so/sdk';
@@ -18,7 +17,8 @@ import {
 } from '@solana/spl-token';
 import Decimal from 'decimal.js';
 import {SOL_DECIMAL, USDC_DECIMAL, ORCA_DECIMAL} from './wallet';
-import * as bs58 from 'bs58';
+// If you want to experiment with the keypair below, uncomment the bs58 import.
+// import * as bs58 from 'bs58';
 
 // Set true for additional logging during the swap process.
 const logging = false;
@@ -41,14 +41,16 @@ const logging = false;
  * The public key is commonly represented as a string when being used as an "address": 9UpA4MYkBw5MGfDm5oCB6hskMt6LdUZ8fUtapG6NioLH
  * console.log(_account.publicKey.toString());
  */
-const _account = Keypair.fromSecretKey(
-  new Uint8Array([
-    175, 193, 241, 226, 223, 32, 155, 13, 1, 120, 157, 36, 15, 39, 141, 146,
-    197, 180, 138, 112, 167, 209, 70, 94, 103, 202, 166, 62, 81, 18, 143, 49,
-    125, 253, 127, 53, 71, 38, 254, 214, 30, 170, 71, 69, 80, 46, 52, 76, 101,
-    246, 34, 16, 96, 4, 164, 39, 220, 88, 184, 201, 138, 180, 181, 238,
-  ]),
-); // This is given for testing purposes only. Do NOT use this keypair in any production code.
+// This keypair is provided for testing & learning purposes only.
+// Do NOT use this keypair in any production code.
+// const _account = Keypair.fromSecretKey(
+//   new Uint8Array([
+//     175, 193, 241, 226, 223, 32, 155, 13, 1, 120, 157, 36, 15, 39, 141, 146,
+//     197, 180, 138, 112, 167, 209, 70, 94, 103, 202, 166, 62, 81, 18, 143, 49,
+//     125, 253, 127, 53, 71, 38, 254, 214, 30, 170, 71, 69, 80, 46, 52, 76, 101,
+//     246, 34, 16, 96, 4, 164, 39, 220, 88, 184, 201, 138, 180, 181, 238,
+//   ]),
+// );
 
 // Token interface for Jupiter SDK
 export interface TokenI {

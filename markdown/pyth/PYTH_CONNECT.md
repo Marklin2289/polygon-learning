@@ -1,6 +1,6 @@
 # 🤨 What are we building, here?
 
-Using price data from Pyth as the foundation, we are going to build a minimum viable product ("MVP") which supports automating the task of swapping between SOL and USDC tokens using a decentralized exchange ("DEX"). The goal is to be able to buy when the price is low and sell when the price is high. There are several ways of referring to this behavior, but for the purposes of this Pathway we will refer to the MVP as a "liquidation bot".
+Using price data from Pyth as the foundation, we are going to build a minimum viable product or "MVP" which supports automating the task of swapping between SOL and USDC tokens using a decentralized exchange or "DEX". The goal is to be able to buy when the price is low and sell when the price is high. There are several ways of referring to this functionality, but for the purposes of this Pathway we will refer to the MVP as a "liquidation bot".
 
 To complete this project, we must implement the following:
 
@@ -9,13 +9,15 @@ To complete this project, we must implement the following:
 - A chart component which accurately depicts the asset price
 - Wire up an input for an expected yield and an amount to buy when a specific threshold of buy signals is reached
 - The logic to determine when to send a swap transaction
-- Wire it all together into a working set of components
+- Wire it all together into a working set of components suitable for use
 
 The purpose of this Pathway is to give you hands-on experience using Pyth by incorporating price data into a useful application. Unrelated to Pyth but still important, the rest of the components will strengthen your understanding of how to visualize market fluctuations on a chart and perform swaps on a DEX.
 
 In essence the "bot" we are building is more like Wall-E than The Terminator. We're focused more on having fun and learning, than on ruthless efficiency.
 
 ![Wall-E and The Terminator](https://raw.githubusercontent.com/figment-networks/learn-web3-dapp/main/markdown/__images__/pyth/walle-terminator.jpg)
+
+---
 
 # 🧐 What is Pyth, anyway?
 

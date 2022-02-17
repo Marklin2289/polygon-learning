@@ -40,6 +40,11 @@ const pythConnection = new PythConnection(connection, pythPublicKey);
 
 const signalListener = new EventEmitter();
 
+type orderSizeMultipleCluster = {
+  mainnet: number;
+  devnet: number;
+};
+
 const Exchange = () => {
   const {state, dispatch} = useGlobalState();
   const [cluster, setCluster] = useState<Cluster>('devnet');
@@ -57,10 +62,17 @@ const Exchange = () => {
     devnetToMainnetPriceRatioRef,
   } = useExtendedWallet(useLive, cluster, price);
 
-  // yieldExpectation is the amount of EMA to buy/sell signal.
+  // Yield is the amount of EMA to trigger a buy/sell signal.
   const [yieldExpectation, setYield] = useState<number>(0.001);
-  const [orderSizeUSDC, setOrderSizeUSDC] = useState<number>(20); // USDC
-  const [orderSizeSOL, setOrderSizeSOL] = useState<number>(0.14); // SOL
+  const [orderSizeUSDC, setOrderSizeUSDC] = useState<orderSizeMultipleCluster>({
+    mainnet: 20,
+    devnet: 20,
+  }); // USDC
+  const [orderSizeSOL, setOrderSizeSOL] = useState<orderSizeMultipleCluster>({
+    mainnet: 0.14,
+    devnet: 0.14,
+  }); // SOL
+
   const [symbol, setSymbol] = useState<string | undefined>(undefined);
 
   // Shorten the public key for display purposes.
@@ -89,14 +101,22 @@ const Exchange = () => {
   // Reset the wallet to the initial state.
 
   useEffect(() => {
-    if (orderBook.length > 0) {
+    if (price) {
       dispatch({
         type: 'SetIsCompleted',
       });
-      // Set ordersize amount in SOL with respect to USDC.
-      setOrderSizeSOL(orderSizeUSDC / price!);
+      // Set order size amounts, respecting devnet price ratio difference.
+      const orderSizeRatio = orderSizeUSDC.mainnet / price;
+      setOrderSizeSOL(() => ({
+        devnet: orderSizeRatio / devnetToMainnetPriceRatioRef.sol_usdc,
+        mainnet: orderSizeUSDC.mainnet / price!,
+      }));
+      setOrderSizeUSDC((sizes) => ({
+        ...sizes,
+        devnet: devnetToMainnetPriceRatioRef.usdc_sol / sizes.mainnet,
+      }));
     }
-  }, [price, orderSizeUSDC, setPrice, orderBook]);
+  }, [price, orderSizeUSDC.mainnet, setPrice, orderBook.length]);
 
   useEffect(() => {
     signalListener.once('*', () => {
@@ -114,17 +134,36 @@ const Exchange = () => {
         Rx.filter((v) => v !== 0), // If we have equivalent signals, don't add any orders.
         Rx.map((val: number) => {
           if (val > 0) {
-            // buy.
+            // Buy.
+            const orderSizeSupposedTo =
+              val *
+              (cluster === 'devnet'
+                ? orderSizeUSDC.devnet
+                : orderSizeUSDC.mainnet);
+            const orderSize = Math.min(
+              orderSizeSupposedTo,
+              balance.usdc_balance,
+            );
             return {
               side: 'buy',
-              size: val * orderSizeUSDC,
+              size: orderSize,
               fromToken: 'usdc',
               toToken: 'sol',
             };
           } else if (val <= 0) {
+            // Sell.
+            const orderSizeSupposedTo =
+              Math.abs(val) *
+              (cluster === 'devnet'
+                ? orderSizeSOL.devnet
+                : orderSizeSOL.mainnet);
+            const orderSize = Math.min(
+              orderSizeSupposedTo,
+              balance.sol_balance,
+            );
             return {
               side: 'sell',
-              size: Math.abs(val) * orderSizeSOL,
+              size: orderSize,
               fromToken: 'sol',
               toToken: 'usdc',
             };
@@ -375,24 +414,40 @@ const Exchange = () => {
           <BuySellControllers addOrder={addOrder} />
           <Statistic value={orderBook.length} title={'Number of Operations'} />
           <Table
-            key="body"
+            key="book"
+            rowKey={(order: Order & SwapResult) =>
+              `order-${order.timestamp}-${order?.txIds.join('-')}`
+            }
             dataSource={orderBook}
             columns={[
               {
                 title: 'Transactions',
                 dataIndex: 'txIds',
                 key: 'txIds',
-                render: (txIds) => {
+                render: (txIds, record) => {
+                  if (txIds.length === 0) {
+                    const errorMsg = record?.error.logs
+                      .find((l: string) => l.startsWith('Program log: Error'))
+                      .replace('Program log: Error: ', ''); // make the error short.
+                    return (
+                      <>
+                        <Tag color={'red'}>Failed</Tag>
+                        <span>{errorMsg}</span>
+                      </>
+                    );
+                  }
                   return (
                     <>
                       {txIds.map((txId: string) => (
                         <a
+                          // @ts-ignore
                           href={`https://solscan.io/tx/${txId}?cluster=${cluster}`}
                           key={txId}
                           target={'_blank'}
                           rel="noreferrer"
                         >
-                          {txId?.substring(-1, 5)}
+                          {txId?.substring(-1, 8)}
+                          <br />
                         </a>
                       ))}
                     </>

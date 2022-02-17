@@ -64,9 +64,6 @@ const ChartMock = () => {
         price.price &&
         price.confidence
       ) {
-        console.log(
-          `${product.symbol}: $${price.price} \xB1$${price.confidence}`,
-        );
         setPrice(price.price);
 
         const newData: {

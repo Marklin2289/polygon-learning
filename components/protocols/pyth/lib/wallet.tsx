@@ -46,6 +46,9 @@ export const useExtendedWallet = (
       let array = Uint8Array.from(bs58.decode(secretKey));
       const key = Keypair.fromSecretKey(array);
       setKeyPair(key);
+      // The line above must be uncommented for the page to work.
+      // We have it commented by default because when the value of
+      // key is undefined, the page will break when it loads.
     } else {
       const temp = Keypair.generate(); // The mock uses a random keypair to be able to get real market data.
       setKeyPair(temp);
@@ -111,7 +114,7 @@ export const useExtendedWallet = (
   );
 
   useEffect(() => {
-    mutate(); // Refresh balance
+    mutate(); // Refresh balance. mutate is destructured from the useSWR hook above.
   }, [cluster]);
 
   useEffect(() => {
@@ -141,6 +144,9 @@ export const useExtendedWallet = (
     null,
   );
 
+  /**
+   * @returns an initialized instance of the OrcaSwapClient class
+   */
   const getOrcaSwapClient = async () => {
     console.log('setting up Orca client');
     if (orcaSwapClient) return orcaSwapClient;
@@ -158,8 +164,11 @@ export const useExtendedWallet = (
   const [jupiterSwapClient, setJupiterSwapClient] =
     useState<JupiterSwapClient | null>(null);
 
+  /**
+   * @returns an initialized instance of the JupiterSwapClient class
+   */
   const getJupiterSwapClient = async () => {
-    console.log('setting up jupiter client');
+    console.log('setting up Jupiter client');
     if (jupiterSwapClient) return jupiterSwapClient;
     const _jupiterSwapClient = await JupiterSwapClient.initialize(
       // Why not use clusterApiUrl('mainnet') over projectserum? Because mainnet public endpoints have rate limits at the moment.
@@ -225,6 +234,13 @@ export const useExtendedWallet = (
       usdc_sol: 1,
     });
 
+  /**
+   * ## Usage:
+   * `await addDevnetOrder(order)`
+   *
+   * @param order an Order object
+   * @returns Promise.resolve() containing the Order data, any errors caught and a timestamp.
+   */
   const addDevnetOrder = async (order: Order) => {
     const timestamp = +new Date();
     try {
@@ -289,6 +305,13 @@ export const useExtendedWallet = (
     }
   };
 
+  /**
+   * ## Usage:
+   * `await addMainnetOrder(order)`
+   *
+   * @param order an Order object
+   * @returns Promise.resolve() containing the Order data, any errors caught and a timestamp.
+   */
   const addMainnetOrder = async (order: Order) => {
     const timestamp = +new Date();
     try {
@@ -322,6 +345,14 @@ export const useExtendedWallet = (
     }
   };
 
+  /**
+   *  This `addOrder` useCallback hook uses the functions defined above to add the
+   *  order object to the order book array. We've combined the Order and SwapResult
+   *  interfaces so that the information on the order book is complete.
+   *
+   *  The dependency array for this hook contains useLive, cluster, keyPair and
+   *  devnetToMainnetProceRatioRef
+   */
   const addOrder = useCallback(
     async (order: Order) => {
       console.log('addOrder', useLive, order, cluster);
