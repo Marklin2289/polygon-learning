@@ -12,11 +12,11 @@ const Pyth: React.FC = () => {
 
   return (
     <>
-      <ProtocolNav
+      {/* <ProtocolNav
         address={address}
         network={network}
         accountExplorer={accountExplorer(network)}
-      />
+      /> */}
       {stepId === PROTOCOL_STEPS_ID.PYTH_CONNECT && <Steps.Connect />}
       {stepId === PROTOCOL_STEPS_ID.PYTH_SOLANA_WALLET && <Steps.Wallet />}
       {stepId === PROTOCOL_STEPS_ID.PYTH_VISUALIZE_DATA && <Steps.ChartMock />}
