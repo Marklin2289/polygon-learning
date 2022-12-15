@@ -1,8 +1,8 @@
 import {ethers} from 'ethers';
 
-const restore = (mnemonic: string, address?: string) => {
+const restore = (privateKey: string, address?: string) => {
   try {
-    const wallet = undefined;
+    const wallet = ethers.Wallet.fromMnemonic(privateKey.trim());
     if (wallet.address === address) {
       const restoredAddress = wallet.address;
       return {
